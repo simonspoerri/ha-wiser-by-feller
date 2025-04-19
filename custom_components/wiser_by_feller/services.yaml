@@ -1,0 +1,46 @@
+status_light:
+  description: Set device status light
+  fields:
+    device:
+      required: true
+      selector:
+        device:
+          filter:
+            - integration: wiser_by_feller
+    color:
+      required: true
+      default:
+        - 26
+        - 188
+        - 242
+      selector:
+        color_rgb:
+    channel:
+      required: true
+      default: 0
+      selector:
+        select:
+          options:
+            - label: Left (Top) or Center Button
+              value: 0
+            - label: Right (Top) Button
+              value: 1
+            - label: Left (Bottom) Button
+              value: 2
+            - label: Right (Bottom) Button
+              value: 3
+    brightness_on:
+      required: true
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    brightness_off:
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 255
+
+      # TODO: https://www.home-assistant.io/docs/blueprint/selectors/#translation_key

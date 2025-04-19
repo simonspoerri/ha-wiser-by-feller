@@ -1,0 +1,44 @@
+{
+  "config": {
+    "flow_title": "Discovered Device ({host})",
+    "step": {
+      "init": {
+        "title": "Connect Wiser by Feller µGateway",
+        "description": "Enter the IP address for your µGateway, click submit and then press the button on the µGateway within 30 seconds. I should be flashing purple and pink.",
+        "data": {
+          "host": "[%key:common::config_flow::data::host%]"
+        },
+        "data_description": {
+          "host": "The hostname or IP address of your µGateway."
+        }
+      }
+    },
+    "error": {
+      "register_failed": "Failed to register, please try again",
+      "linking": "[%key:common::config_flow::error::unknown%]"
+    },
+    "abort": {
+      "discover_timeout": "Unable to discover Wiser µGateways",
+      "no_gateways": "No Wiser µGateways discovered",
+      "all_configured": "All Wiser µGateways are already configured",
+      "unknown": "[%key:common::config_flow::error::unknown%]",
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "already_in_progress": "[%key:common::config_flow::abort::already_in_progress%]",
+      "not_wiser_gateway": "Not a Wiser µGateway",
+      "invalid_host": "[%key:common::config_flow::error::invalid_host%]"
+    }
+  },
+  "entity": {
+    "button": {
+      "identify": {
+        "name": "Identify"
+      }
+    },
+    "sensor": {
+      "rssi": {
+        "name": "RSSI"
+      }
+    }
+  }
+}

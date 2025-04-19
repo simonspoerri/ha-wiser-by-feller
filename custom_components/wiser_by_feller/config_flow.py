@@ -1,0 +1,107 @@
+"""Config flow for Wiser by Feller integration."""
+from __future__ import annotations
+
+import logging
+from typing import Any
+
+import voluptuous as vol
+
+from aiohttp.client_exceptions import ClientError
+from aiowiserbyfeller import WiserByFellerAPI, Auth, AuthorizationFailed
+from homeassistant import config_entries
+from homeassistant.components import dhcp
+from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL
+from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResult
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers import config_validation as cv
+
+from .const import DOMAIN, API_USER
+
+_LOGGER = logging.getLogger(__name__)
+
+STEP_USER_DATA_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Optional(CONF_SCAN_INTERVAL): cv.positive_int,
+    }
+)
+
+
+class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    """Handle a config flow for Wiser by Feller."""
+    VERSION = 1
+    MINOR_VERSION = 1
+
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        """Handle the initial step."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            try:
+                info = await self.validate_input(self.hass, user_input)
+                await self.async_set_unique_id(info["sn"])
+            except CannotConnect:
+                errors["base"] = "cannot_connect"
+            except InvalidAuth:
+                errors["base"] = "invalid_auth"
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Unexpected exception")
+                errors["base"] = "unknown"
+            else:
+                return self.async_create_entry(title=info["title"], data=info)
+
+        return self.async_show_form(
+            step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
+        )
+
+    async def async_step_dhcp(self, discovery_info: dhcp.DhcpServiceInfo) -> FlowResult:
+        """Handle a flow initialized by discovery."""
+        try:
+            session = async_get_clientsession(self.hass)
+            auth = Auth(session, discovery_info.ip)
+            api = WiserByFellerAPI(auth)
+            info = await api.async_get_info()
+        except Exception:  # pylint: disable=broad-except
+            return self.async_abort(reason="not_wiser_gateway")
+
+        await self.async_set_unique_id(info["sn"])
+        self._abort_if_unique_id_configured({CONF_HOST: discovery_info.ip})
+        self._async_abort_entries_match({CONF_HOST: discovery_info.ip})
+
+        self._discovered_host = discovery_info.ip
+        return await self.async_step_confirm()
+
+    async def validate_input(self, hass: HomeAssistant, user_input: dict[str, Any]) -> dict[str, Any]:
+        session = async_get_clientsession(hass)
+        auth = Auth(session, user_input["host"])
+        api = WiserByFellerAPI(auth)
+        info = await api.async_get_info()
+
+        await self.async_set_unique_id(info["sn"])
+        self._abort_if_unique_id_configured({CONF_HOST: user_input["host"]})
+        self._async_abort_entries_match({CONF_HOST: user_input["host"]})
+
+        try:
+            token = await auth.claim(API_USER)
+        except AuthorizationFailed:
+            raise CannotConnect
+        except ClientError:
+            raise CannotConnect
+        net_state = await api.async_get_net_state()
+
+        return {
+            "title": net_state["hostname"],
+            "token": token,
+            "sn": info["sn"],
+            "host": user_input["host"],
+            "user": API_USER,
+        }
+
+
+class CannotConnect(HomeAssistantError):
+    """Error to indicate we cannot connect."""
+
+
+class InvalidAuth(HomeAssistantError):
+    """Error to indicate there is invalid auth."""

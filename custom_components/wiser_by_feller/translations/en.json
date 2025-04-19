@@ -1,0 +1,44 @@
+{
+    "config": {
+        "abort": {
+            "all_configured": "All Wiser \u00b5Gateways are already configured",
+            "already_configured": "Device is already configured",
+            "already_in_progress": "Configuration flow is already in progress",
+            "cannot_connect": "Failed to connect",
+            "discover_timeout": "Unable to discover Wiser \u00b5Gateways",
+            "invalid_host": "Invalid hostname or IP address",
+            "no_gateways": "No Wiser \u00b5Gateways discovered",
+            "not_wiser_gateway": "Not a Wiser \u00b5Gateway",
+            "unknown": "Unexpected error"
+        },
+        "error": {
+            "linking": "Unexpected error",
+            "register_failed": "Failed to register, please try again"
+        },
+        "flow_title": "Discovered Device ({host})",
+        "step": {
+            "init": {
+                "data": {
+                    "host": "Host"
+                },
+                "data_description": {
+                    "host": "The hostname or IP address of your \u00b5Gateway."
+                },
+                "description": "Enter the IP address for your \u00b5Gateway, click submit and then press the button on the \u00b5Gateway within 30 seconds. I should be flashing purple and pink.",
+                "title": "Connect Wiser by Feller \u00b5Gateway"
+            }
+        }
+    },
+    "entity": {
+        "button": {
+            "identify": {
+                "name": "Identify"
+            }
+        },
+        "sensor": {
+            "rssi": {
+                "name": "RSSI"
+            }
+        }
+    }
+}
