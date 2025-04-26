@@ -13,12 +13,11 @@ Use your Wiser by Feller smart light switches, cover controls and scene buttons 
 4. The buttons on your µGateway should start flashing purple and pink. Press one of them within 30 seconds
 
 ## Core principles of the integration
+* TODO
 
 ## Functionality
 ### Devices
 Wiser by Feller devices always consist of two parts: The control front and the base module. There are switching base modules (for light switches and cover controllers) and non-switching base modules (for scene buttons and secondary controls).
-
-The
 
 ### Status LEDs
 The integration also provides a status light service that allows you to control the status leds of a Wiser device. Each channel (load) of the device supports a brightness value for the logical "on" and "off" state. Secondary devices follow the main device. As there currently is no way in the Wiser ecosystem to determine wheter a scene is active, scene buttons do not have a logical "on" state. Two-channel devices (e.g. two dimmers in the same switch) allow for different configurations for each channel.
@@ -28,4 +27,4 @@ The integration also provides a status light service that allows you to control 
 - Note that updating the configuration can take up to multiple seconds as there are multiple slow API calls involved.
 
 ## Known issues
-- As of right now, the µGateway API only supports Rest and Websockets. MQTT is implemented, [but only for the proprietary app]().
+- As of right now, the µGateway API only supports Rest and Websockets. MQTT is implemented, [but only for the proprietary app](https://github.com/Feller-AG/wiser-api/issues/23).

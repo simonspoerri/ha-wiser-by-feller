@@ -56,7 +56,7 @@ class WiserPingEntity(WiserEntity, ButtonEntity):
         room: dict | None,
     ) -> None:
         super().__init__(coordinator, load, device, room)
-        self._attr_unique_id = f"{self._attr_unique_id}_identify"
+        self._attr_unique_id = f"{self._attr_raw_unique_id}_identify"
         self._attr_device_class = ButtonDeviceClass.IDENTIFY
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._wiser_split_devices = load is not None

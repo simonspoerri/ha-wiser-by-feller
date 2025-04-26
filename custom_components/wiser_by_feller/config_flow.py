@@ -1,40 +1,45 @@
 """Config flow for Wiser by Feller integration."""
+
 from __future__ import annotations
 
 import logging
 from typing import Any
 
+from aiohttp.client_exceptions import ClientError
+from aiowiserbyfeller import Auth, AuthorizationFailed, WiserByFellerAPI
 import voluptuous as vol
 
-from aiohttp.client_exceptions import ClientError
-from aiowiserbyfeller import WiserByFellerAPI, Auth, AuthorizationFailed
 from homeassistant import config_entries
 from homeassistant.components import dhcp
-from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL
+from homeassistant.const import CONF_HOST, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN, API_USER
+from .const import API_USER, CONF_IMPORTUSER, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): cv.string,
-        vol.Optional(CONF_SCAN_INTERVAL): cv.positive_int,
+        vol.Required(CONF_USERNAME, default=API_USER): cv.string,
+        vol.Required(CONF_IMPORTUSER, default="admin"): cv.string,
     }
 )
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Wiser by Feller."""
+
     VERSION = 1
     MINOR_VERSION = 1
 
-    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Handle the initial step."""
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -72,7 +77,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._discovered_host = discovery_info.ip
         return await self.async_step_confirm()
 
-    async def validate_input(self, hass: HomeAssistant, user_input: dict[str, Any]) -> dict[str, Any]:
+    async def validate_input(
+        self, hass: HomeAssistant, user_input: dict[str, Any]
+    ) -> dict[str, Any]:
         session = async_get_clientsession(hass)
         auth = Auth(session, user_input["host"])
         api = WiserByFellerAPI(auth)
@@ -83,7 +90,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._async_abort_entries_match({CONF_HOST: user_input["host"]})
 
         try:
-            token = await auth.claim(API_USER)
+            token = await auth.claim(
+                user_input[CONF_USERNAME], user_input[CONF_IMPORTUSER]
+            )
         except AuthorizationFailed:
             raise CannotConnect
         except ClientError:

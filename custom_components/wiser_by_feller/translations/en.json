@@ -1,44 +1,49 @@
 {
-    "config": {
-        "abort": {
-            "all_configured": "All Wiser \u00b5Gateways are already configured",
-            "already_configured": "Device is already configured",
-            "already_in_progress": "Configuration flow is already in progress",
-            "cannot_connect": "Failed to connect",
-            "discover_timeout": "Unable to discover Wiser \u00b5Gateways",
-            "invalid_host": "Invalid hostname or IP address",
-            "no_gateways": "No Wiser \u00b5Gateways discovered",
-            "not_wiser_gateway": "Not a Wiser \u00b5Gateway",
-            "unknown": "Unexpected error"
-        },
-        "error": {
-            "linking": "Unexpected error",
-            "register_failed": "Failed to register, please try again"
-        },
-        "flow_title": "Discovered Device ({host})",
-        "step": {
-            "init": {
-                "data": {
-                    "host": "Host"
-                },
-                "data_description": {
-                    "host": "The hostname or IP address of your \u00b5Gateway."
-                },
-                "description": "Enter the IP address for your \u00b5Gateway, click submit and then press the button on the \u00b5Gateway within 30 seconds. I should be flashing purple and pink.",
-                "title": "Connect Wiser by Feller \u00b5Gateway"
-            }
-        }
+  "config": {
+    "flow_title": "Discovered Device ({host})",
+    "abort": {
+      "all_configured": "All Wiser \u00b5Gateways are already configured",
+      "already_configured": "Device is already configured",
+      "already_in_progress": "Configuration flow is already in progress",
+      "cannot_connect": "Failed to connect",
+      "discover_timeout": "Unable to discover Wiser \u00b5Gateways",
+      "invalid_host": "Invalid hostname or IP address",
+      "no_gateways": "No Wiser \u00b5Gateways discovered",
+      "not_wiser_gateway": "Not a Wiser \u00b5Gateway",
+      "unknown": "Unexpected error"
     },
-    "entity": {
-        "button": {
-            "identify": {
-                "name": "Identify"
-            }
+    "error": {
+      "linking": "Unexpected error",
+      "register_failed": "Failed to register, please try again"
+    },
+    "step": {
+      "user": {
+        "data": {
+          "host": "Host",
+          "username": "Username",
+          "import_user": "Import config from",
+          "scan_interval": "Scan interval (in seconds)"
         },
-        "sensor": {
-            "rssi": {
-                "name": "RSSI"
-            }
-        }
+        "data_description": {
+          "host": "The hostname or IP address of your \u00b5Gateway.",
+          "username": "The username to be used for the API. You can enter anything, however only one connection per username is possible. If you have multiple instances, use unique usernames.",
+          "import_user": "The user to import existing Wiser configuration from (like scenes, rooms and load names). If you don't have any other systems using the API, you can choose between 'installer' (Wiser eSetup app) and 'admin' (Wiser Home app)."
+        },
+        "description": "Enter the IP address of your \u00b5Gateway and click submit. The buttons should start to flash pink and purple. Press any of the flashing buttons on the \u00b5Gateway within 30 seconds to connect your Home Assistant instance.",
+        "title": "Connect Wiser by Feller \u00b5Gateway"
+      }
     }
+  },
+  "entity": {
+    "button": {
+      "identify": {
+        "name": "Identify"
+      }
+    },
+    "sensor": {
+      "rssi": {
+        "name": "RSSI"
+      }
+    }
+  }
 }

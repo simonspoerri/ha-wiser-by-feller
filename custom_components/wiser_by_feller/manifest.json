@@ -1,24 +1,19 @@
 {
   "domain": "wiser_by_feller",
   "name": "Wiser by Feller",
-  "codeowners": [
-    "@mpbzh"
-  ],
+  "codeowners": ["@mpbzh"],
   "version": "1.0.0",
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://www.home-assistant.io/integrations/wiser_by_feller",
+  "documentation": "https://github.com/syonix/ha-wiser-by-feller",
   "homekit": {},
   "iot_class": "local_pull",
   "integration_type": "hub",
-  "requirements": [
-    "websockets",
-    "aiowiserbyfeller==1.0.0b6"
-  ],
+  "requirements": ["websockets", "aiowiserbyfeller==1.0.0b6"],
   "dhcp": [
-      {
-        "hostname": "wiser-*",
-        "macaddress": "145AFC*"
-      }
+    {
+      "hostname": "wiser-*",
+      "macaddress": "145AFC*"
+    }
   ]
 }

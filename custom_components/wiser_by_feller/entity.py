@@ -33,14 +33,19 @@ class WiserEntity(CoordinatorEntity):
         )  # TODO: Suboptimal
         self.coordinator = coordinator
         self._attr_has_entity_name = True
-        self._attr_unique_id = (
+        self._attr_raw_unique_id = (
             device.id if load is None else f"{load.device}_{load.channel}"
         )
+        self._attr_unique_id = self._attr_raw_unique_id
         self._device = device
         self._device_name = resolve_device_name(device, room, load)
         self._is_gateway = info["wlan"]
         self._load = load
         self._room = room
+
+    @property
+    def raw_unique_id(self) -> str:
+        return self._attr_raw_unique_id
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -50,13 +55,13 @@ class WiserEntity(CoordinatorEntity):
         area = None if self._room is None else self._room["name"]
         via = (
             (DOMAIN, self.coordinator.gateway.combined_serial_number)
-            if not self._is_gateway
+            if self.coordinator.gateway is not None and not self._is_gateway
             else None
         )
 
         return DeviceInfo(
             identifiers={
-                (DOMAIN, self._attr_unique_id),
+                (DOMAIN, self.raw_unique_id),
             },
             name=resolve_device_name(self._device, self._room, self._load),
             manufacturer=MANUFACTURER,

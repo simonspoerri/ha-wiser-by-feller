@@ -34,7 +34,7 @@ _LOGGER = logging.getLogger(__name__)
 class WiserCoordinator(DataUpdateCoordinator):
     """Class for coordinating all Wiser devices / entities."""
 
-    def __init__(self, hass, api: WiserByFellerAPI, host: str, token: str):
+    def __init__(self, hass, api: WiserByFellerAPI, host: str, token: str) -> None:
         """Initialize global data updater."""
         super().__init__(
             hass,
@@ -155,7 +155,7 @@ class WiserCoordinator(DataUpdateCoordinator):
             # and start a config flow with SOURCE_REAUTH (async_step_reauth)
             raise ConfigEntryAuthFailed from err
         except UnsuccessfulRequest as err:
-            raise UpdateFailed(f"Error communicating with API: {err}")
+            raise UpdateFailed(f"Error communicating with API: {err}") from err
 
     def ws_init(self):
         self._ws.subscribe(self.ws_update_load)
@@ -184,6 +184,12 @@ class WiserCoordinator(DataUpdateCoordinator):
         for device in await self._api.async_get_devices_detail():
             result[device.id] = device
             serials[device.combined_serial_number] = device.id
+
+            if device.c["comm_ref"] == "":
+                raise Exception(
+                    f"Invalid API response: Device {device.id} has an empty comm_ref!"
+                )
+
             info = parse_wiser_device_ref_c(device.c["comm_ref"])
             if info["wlan"]:
                 self._gateway = device
