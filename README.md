@@ -4,6 +4,25 @@ Use your Wiser by Feller smart light switches, cover controls and scene buttons 
 
 **Beware:** This integration implements [Wiser by Feller](https://wiser.feller.ch) and not [Wiser by Schneider Electric](https://www.se.com/de/de/product-range/65635-wiser/), which is a competing Smart Home platform (and is not compatible). It es even more confusing, as Feller (the company) is a local subsidiary of Schneider Electric, catering only to the Swiss market.
 
+> [!WARNING]
+> Be advised: This integration is somewhere between Alpha and Beta. It has been running relatively stable for probably a year, but still, there might be bugs. Proceed with caution.
+
+## Installation
+### Using [HACS](https://www.hacs.xyz/)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mpbzh&repository=https%3A%2F%2Fgithub.com%2FSyonix%2Fha-wiser-by-feller)
+
+Click the button above or perform the following steps:
+1. Navigate to HACS on your Home Assistant
+2. Click on the 3 dots in the top right corner.
+3. Select "Custom repositories"
+4. Enter the URL of this repository (https://github.com/Syonix/ha-wiser-by-feller) 
+5. Select the type "Integration".
+6. Click the "ADD" button.
+
+### Manual installation
+Copy the directory `custom_components/wiser_by_feller` into your `custom_components` directory. 
+If it does not exist yet, you can create it in the home assistant installation directory.
+
 ## Setup
 **Note:** Please make sure your Wiser setup has been fully configured by your electrition before adding it to Home Assistant. Otherwise naming and categorizing all the devices can be very time consuming and confusing.
 
@@ -28,3 +47,4 @@ The integration also provides a status light service that allows you to control 
 
 ## Known issues
 - As of right now, the µGateway API only supports Rest and Websockets. MQTT is implemented, [but only for the proprietary app](https://github.com/Feller-AG/wiser-api/issues/23).
+- Currently only light and motor devices are supported. Dali Tunable White and Dali RGB devices are untested.
