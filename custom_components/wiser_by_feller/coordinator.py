@@ -274,7 +274,10 @@ class WiserCoordinator(DataUpdateCoordinator):
 
     def validate_device_data(self, device: Device):
         """Validate API response for critical object keys."""
-        if self._options[OPTIONS_ALLOW_MISSING_GATEWAY_DATA]:
+        if (
+            OPTIONS_ALLOW_MISSING_GATEWAY_DATA in self._options
+            and self._options[OPTIONS_ALLOW_MISSING_GATEWAY_DATA] is True
+        ):
             return
 
         for key in ("a", "c"):
