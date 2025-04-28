@@ -6,20 +6,25 @@ import logging
 from typing import Any
 
 from aiohttp.client_exceptions import ClientError
-from aiowiserbyfeller import Auth, AuthorizationFailed, WiserByFellerAPI
+from aiowiserbyfeller import (
+    Auth,
+    AuthorizationFailed,
+    UnauthorizedUser,
+    WiserByFellerAPI,
+)
 import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.components import dhcp
+from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_USERNAME
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
-    API_USER,
     CONF_IMPORTUSER,
+    DEFAULT_API_USER,
     DEFAULT_IMPORT_USER,
     DOMAIN,
     OPTIONS_ALLOW_MISSING_GATEWAY_DATA,
@@ -31,7 +36,7 @@ _LOGGER = logging.getLogger(__name__)
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): cv.string,
-        vol.Required(CONF_USERNAME, default=API_USER): cv.string,
+        vol.Required(CONF_USERNAME, default=DEFAULT_API_USER): cv.string,
         vol.Required(CONF_IMPORTUSER, default=DEFAULT_IMPORT_USER): cv.string,
     }
 )
@@ -49,9 +54,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
     MINOR_VERSION = 1
 
+    _reauth_entry: list[str, Any]
+    _reauth_entry_data: list[str, Any]
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Handle the initial step."""
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -59,7 +67,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 info = await self.validate_input(self.hass, user_input)
                 await self.async_set_unique_id(info["sn"])
             except CannotConnect:
-                errors["base"] = "cannot_connect"
+                errors["base"] = "cannot_connect"  # TODO: errors are not translated
             except InvalidAuth:
                 errors["base"] = "invalid_auth"
             except Exception:  # pylint: disable=broad-except
@@ -72,8 +80,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
 
-    async def async_step_dhcp(self, discovery_info: dhcp.DhcpServiceInfo) -> FlowResult:
+    async def async_step_dhcp(
+        self, discovery_info: dhcp.DhcpServiceInfo
+    ) -> ConfigFlowResult:
         """Handle a flow initialized by discovery."""
+        # TODO: Not working
         try:
             session = async_get_clientsession(self.hass)
             auth = Auth(session, discovery_info.ip)
@@ -91,17 +102,21 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return await self.async_step_confirm()
 
     async def validate_input(
-        self, hass: HomeAssistant, user_input: dict[str, Any]
+        self,
+        hass: HomeAssistant,
+        user_input: dict[str, Any],
+        allowExisting: bool = False,
     ) -> dict[str, Any]:
         """Validate user input for µGateway setup."""
         session = async_get_clientsession(hass)
-        auth = Auth(session, user_input["host"])
+        auth = Auth(session, user_input[CONF_HOST])
         api = WiserByFellerAPI(auth)
         info = await api.async_get_info()
 
         await self.async_set_unique_id(info["sn"])
-        self._abort_if_unique_id_configured({CONF_HOST: user_input["host"]})
-        self._async_abort_entries_match({CONF_HOST: user_input["host"]})
+        if not allowExisting:
+            self._abort_if_unique_id_configured({CONF_HOST: user_input[CONF_HOST]})
+            self._async_abort_entries_match({CONF_HOST: user_input[CONF_HOST]})
 
         try:
             token = await auth.claim(
@@ -118,9 +133,61 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             "title": net_state["hostname"],
             "token": token,
             "sn": info["sn"],
-            "host": user_input["host"],
-            "user": API_USER,
+            "host": user_input[CONF_HOST],
+            "username": user_input[CONF_USERNAME],
         }
+
+    async def async_step_reauth(self, entry_data: list[str, Any]) -> ConfigFlowResult:
+        """Handle configuration by re-auth."""
+        self._reauth_entry_data = entry_data
+        self._reauth_entry = self.hass.config_entries.async_get_entry(
+            self.context["entry_id"]
+        )
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle reauthentication with new credentials."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            try:
+                info = await self.validate_input(self.hass, user_input, True)
+                await self.async_set_unique_id(info["sn"])
+            except CannotConnect:
+                errors["base"] = "cannot_connect"
+            except (InvalidAuth, UnauthorizedUser):
+                errors["base"] = "invalid_auth"
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Unexpected exception")
+                errors["base"] = "unknown"
+            else:
+                self.hass.config_entries.async_update_entry(
+                    self._reauth_entry,
+                    data=info,
+                )
+                await self.hass.config_entries.async_reload(self._reauth_entry_id)
+
+                return self.async_abort(reason="reauth_successful")
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_HOST, default=self._reauth_entry_data.get(CONF_HOST)
+                    ): str,
+                    vol.Required(
+                        CONF_USERNAME,
+                        default=self._reauth_entry_data.get(
+                            CONF_USERNAME, DEFAULT_API_USER
+                        ),
+                    ): str,
+                    vol.Required(CONF_IMPORTUSER, default=DEFAULT_IMPORT_USER): str,
+                }
+            ),
+            errors=errors,
+        )
 
     @staticmethod
     @callback
@@ -134,7 +201,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Manage the options."""
         if user_input is not None:
             return self.async_create_entry(data=user_input)

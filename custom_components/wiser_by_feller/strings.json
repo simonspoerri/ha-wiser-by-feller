@@ -1,6 +1,6 @@
 {
   "config": {
-    "flow_title": "Discovered Device ({host})",
+    "flow_title": "Connect Wiser by Feller µGateway",
     "step": {
       "init": {
         "title": "Connect Wiser by Feller µGateway",
@@ -15,7 +15,16 @@
     },
     "error": {
       "register_failed": "Failed to register, please try again",
-      "linking": "[%key:common::config_flow::error::unknown%]"
+      "linking": "[%key:common::config_flow::error::unknown%]",
+      "discover_timeout": "Unable to discover Wiser µGateways",
+      "no_gateways": "No Wiser µGateways discovered",
+      "all_configured": "All Wiser µGateways are already configured",
+      "unknown": "[%key:common::config_flow::error::unknown%]",
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "already_in_progress": "[%key:common::config_flow::abort::already_in_progress%]",
+      "not_wiser_gateway": "Not a Wiser µGateway",
+      "invalid_host": "[%key:common::config_flow::error::invalid_host%]"
     },
     "abort": {
       "discover_timeout": "Unable to discover Wiser µGateways",
@@ -26,7 +35,14 @@
       "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
       "already_in_progress": "[%key:common::config_flow::abort::already_in_progress%]",
       "not_wiser_gateway": "Not a Wiser µGateway",
-      "invalid_host": "[%key:common::config_flow::error::invalid_host%]"
+      "invalid_host": "[%key:common::config_flow::error::invalid_host%]",
+      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
+    }
+  },
+  "options": {
+    "allow_missing_gateway_data": {
+      "title": "Allow missing µGateway data",
+      "description": "By default, the setup fails, if fields like fw_version or serial_nr are missing for devices in the API response. Enable this option for debug purposes to disable the check. WARNING: Use with caution, this can affect entity IDs and functionality!"
     }
   },
   "entity": {

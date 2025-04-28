@@ -13,6 +13,7 @@ from aiowiserbyfeller import (
     Job,
     Load,
     Scene,
+    UnauthorizedUser,
     UnsuccessfulRequest,
     Websocket,
     WiserByFellerAPI,
@@ -208,6 +209,8 @@ class WiserCoordinator(DataUpdateCoordinator):
         except AuthorizationFailed as err:
             # Raising ConfigEntryAuthFailed will cancel future updates
             # and start a config flow with SOURCE_REAUTH (async_step_reauth)
+            raise ConfigEntryAuthFailed from err
+        except UnauthorizedUser as err:
             raise ConfigEntryAuthFailed from err
         except UnsuccessfulRequest as err:
             raise UpdateFailed(f"Error communicating with API: {err}") from err

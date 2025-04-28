@@ -13,7 +13,7 @@
   "integration_type": "hub",
   "requirements": [
     "websockets",
-    "aiowiserbyfeller==1.0.0b6"
+    "aiowiserbyfeller==1.0.0b7"
   ],
   "dhcp": [
     {
