@@ -46,12 +46,18 @@ async def async_setup_entry(
 
         if isinstance(load, OnOff) and load.kind == KIND_SWITCH:
             entities.append(WiserOnOffSwitchEntity(coordinator, load, device, room))
-        elif isinstance(load, OnOff) and load.kind == KIND_LIGHT:
+        elif isinstance(load, OnOff) and (load.kind == KIND_LIGHT or load.kind is None):
             entities.append(WiserOnOffEntity(coordinator, load, device, room))
-        # elif isinstance(load, DaliTw):
-        #     entities.append(WiserDimTwEntity(coordinator, load, device, room))
-        # elif isinstance(load, DaliRgbw):
-        #     entities.append(WiserDimRgbEntity(coordinator, load, device, room))
+        elif isinstance(load, DaliTw):
+            _LOGGER.warning(
+                "Sorry, Dali Tunable White devices are currently not supported. Feel free to request an implementation on GitHub: https://github.com/Syonix/ha-wiser-by-feller/issues/new"
+            )
+            # entities.append(WiserDimTwEntity(coordinator, load, device, room))
+        elif isinstance(load, DaliRgbw):
+            _LOGGER.warning(
+                "Sorry, Dali RGB devices are currently not supported. Feel free to request an implementation on GitHub: https://github.com/Syonix/ha-wiser-by-feller/issues/new"
+            )
+            # entities.append(WiserDimRgbEntity(coordinator, load, device, room))
         elif isinstance(load, Dim):  # Includes Dali
             entities.append(WiserDimEntity(coordinator, load, device, room))
 
