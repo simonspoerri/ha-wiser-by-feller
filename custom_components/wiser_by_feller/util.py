@@ -4,6 +4,7 @@ from aiowiserbyfeller import Device, Load
 
 
 def resolve_load_channel_name(device: Device, pos: int) -> str:
+    """Get the button position string of a device load."""
     buttons = len(device.outputs)
 
     if buttons < 2:
@@ -22,6 +23,7 @@ def resolve_load_channel_name(device: Device, pos: int) -> str:
 
 
 def resolve_load_name(load: Load, room: dict):
+    """Get the name of a load."""
     if room is None or room["name"] in load.name:
         return load.name
 
@@ -29,6 +31,7 @@ def resolve_load_name(load: Load, room: dict):
 
 
 def resolve_device_name(device: Device, room: dict | None, load: Load | None) -> str:
+    """Get the name of a device."""
     if load is not None:
         name = load.name
     else:
@@ -73,9 +76,11 @@ def cover_tilt_to_wiser(cover_position: int) -> int:
 
 
 def hex_to_rbg_tuple(hexval: str) -> tuple[int, ...]:
+    """Convert a hex color code to an RGB tuple."""
     color = hexval.lstrip("#")
     return tuple(int(color[i : i + 2], 16) for i in (0, 2, 4))
 
 
 def rgb_tuple_to_hex(rgb: tuple[int, int, int]) -> str:
-    return "#%02x%02x%02x" % rgb
+    """Convert an RGB color tuple to a hex color code."""
+    return "#{:02x}{:02x}{:02x}".format(*rgb)

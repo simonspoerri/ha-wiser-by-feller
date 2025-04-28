@@ -23,6 +23,8 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
+    """Set up Wiser scenes."""
+
     coordinator = hass.data[DOMAIN][entry.entry_id]
     entities = []
 
@@ -39,13 +41,14 @@ async def async_setup_entry(
 
 
 class WiserSceneEntity(HaScene):
-    """Entity class for scenes."""
+    """Entity class for native scenes in the Wiser ecosystem."""
 
     def __init__(
         self,
         coordinator: WiserCoordinator,
         scene: Scene,
     ) -> None:
+        """Set up the scene entity."""
         self.coordinator = coordinator
         self._attr_has_entity_name = True
         self._attr_unique_id = f"scene_{scene.id}"
@@ -53,6 +56,6 @@ class WiserSceneEntity(HaScene):
         self._scene = scene
 
     async def async_activate(self, **kwargs: Any) -> None:
-        """Trigger Wiser scene."""
+        """Trigger the Wiser scene."""
         job = self.coordinator.jobs[self._scene.job]
         await job.async_trigger_all()

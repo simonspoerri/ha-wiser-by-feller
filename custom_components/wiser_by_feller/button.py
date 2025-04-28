@@ -25,6 +25,7 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
+    """Set up Wiser button entities."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
 
     entities = []
@@ -46,7 +47,11 @@ async def async_setup_entry(
 
 
 class WiserPingEntity(WiserEntity, ButtonEntity):
-    """Entity class for ping buttons."""
+    """Entity class for ping button entities.
+
+    These allow a load or device to be pinged, resulting in a flashing button
+    illumination on the targeted device. This helps to identify devices.
+    """
 
     def __init__(
         self,
@@ -55,6 +60,7 @@ class WiserPingEntity(WiserEntity, ButtonEntity):
         device: Device,
         room: dict | None,
     ) -> None:
+        """Set up wiser button entity."""
         super().__init__(coordinator, load, device, room)
         self._attr_unique_id = f"{self._attr_raw_unique_id}_identify"
         self._attr_device_class = ButtonDeviceClass.IDENTIFY
@@ -71,7 +77,8 @@ class WiserPingEntity(WiserEntity, ButtonEntity):
         """Handle updated data from the coordinator."""
 
     async def async_press(self, **kwargs: Any) -> None:
+        """Ping the load or device to illuminate the button."""
         if self._load:
             await self._load.async_ping(10000, "ramp", "#1abcf2")
         else:
-            await self.coordinator._api.async_ping_device(self._device.id)
+            await self.coordinator.async_ping_device(self._device.id)

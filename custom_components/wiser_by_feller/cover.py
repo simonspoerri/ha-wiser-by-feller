@@ -5,9 +5,8 @@ from __future__ import annotations
 import logging
 import sched
 import time
-from typing import Any
 
-from aiowiserbyfeller import KIND_VENETIAN_BLINDS, Device, Load, Motor
+from aiowiserbyfeller import KIND_AWNING, KIND_VENETIAN_BLINDS, Device, Load, Motor
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
@@ -38,6 +37,7 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
+    """Set up Wiser cover entities."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
 
     entities = []
@@ -47,7 +47,7 @@ async def async_setup_entry(
         room = coordinator.rooms[load.room] if load.room is not None else None
 
         if isinstance(load, Motor) and load.sub_type == "relay":
-            entities.append(WiserRelaisEntity(coordinator, load, device, room))
+            entities.append(WiserRelayEntity(coordinator, load, device, room))
         elif isinstance(load, Motor) and load.type == KIND_VENETIAN_BLINDS:
             entities.append(WiserTiltableCoverEntity(coordinator, load, device, room))
         elif isinstance(load, Motor):
@@ -57,12 +57,13 @@ async def async_setup_entry(
         async_add_entities(entities)
 
 
-class WiserRelaisEntity(WiserEntity, CoverEntity):
+class WiserRelayEntity(WiserEntity, CoverEntity):
     """Wiser entity class for basic motor entities."""
 
     def __init__(
         self, coordinator: WiserCoordinator, load: Load, device: Device, room: dict
     ) -> None:
+        """Set up the relay entity."""
         super().__init__(coordinator, load, device, room)
 
         self._attr_name = None
@@ -70,7 +71,7 @@ class WiserRelaisEntity(WiserEntity, CoverEntity):
             CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE | CoverEntityFeature.STOP
         )
 
-        # There is not fitting default for "motor", so we use shade.
+        # There is no suitable default for "motor", so we use shade.
         self._attr_device_class = CoverDeviceClass.SHADE
         self._scheduler = sched.scheduler(time.time, time.sleep)
         self._scheduler_id = None
@@ -120,18 +121,19 @@ class WiserRelaisEntity(WiserEntity, CoverEntity):
 
     def async_keep_track(self, scheduler):
         """Update load data and stop tracking if not moving anymore."""
-        _LOGGER.info(f"Updating load #{self._load.id} while moving...")
+        _LOGGER.debug("Updating load #%s while moving", self._load.id)
         self._load.async_refresh_state()
         if self.is_closing or self.is_opening:
             self.start_tracking()
 
 
-class WiserCoverEntity(WiserRelaisEntity, CoverEntity):
+class WiserCoverEntity(WiserRelayEntity, CoverEntity):
     """Wiser entity class for non-tiltable covers like shades and awnings."""
 
     def __init__(
         self, coordinator: WiserCoordinator, load: Load, device: Device, room: dict
     ) -> None:
+        """Set up Wiser cover entity."""
         super().__init__(coordinator, load, device, room)
 
         self._attr_supported_features = (
@@ -141,11 +143,12 @@ class WiserCoverEntity(WiserRelaisEntity, CoverEntity):
             | CoverEntityFeature.SET_POSITION
         )
 
-        if load.kind == 3:
-            self._attr_device_class = CoverDeviceClass.AWNING
-        else:
-            # There is not fitting default for "motor", so we use shade.
-            self._attr_device_class = CoverDeviceClass.SHADE
+        # There is not suitable default for "motor", so we use shade.
+        self._attr_device_class = (
+            CoverDeviceClass.AWNING
+            if load.kind == KIND_AWNING
+            else CoverDeviceClass.SHADE
+        )
 
     @property
     def current_cover_position(self) -> int | None:
@@ -173,6 +176,7 @@ class WiserTiltableCoverEntity(WiserCoverEntity, CoverEntity):
     def __init__(
         self, coordinator: WiserCoordinator, load: Load, device: Device, room: dict
     ) -> None:
+        """Set up Wiser tiltable cover entity."""
         super().__init__(coordinator, load, device, room)
 
         self._attr_supported_features = (

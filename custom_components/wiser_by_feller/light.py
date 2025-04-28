@@ -35,6 +35,7 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
+    """Set up Wiser light entities."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
 
     entities = []
@@ -45,11 +46,11 @@ async def async_setup_entry(
 
         if isinstance(load, OnOff) and load.kind == KIND_SWITCH:
             entities.append(WiserOnOffSwitchEntity(coordinator, load, device, room))
-        elif isinstance(load, OnOff):
+        elif isinstance(load, OnOff) and load.kind == KIND_LIGHT:
             entities.append(WiserOnOffEntity(coordinator, load, device, room))
-        # elif (isinstance(load, DaliTw)):
+        # elif isinstance(load, DaliTw):
         #     entities.append(WiserDimTwEntity(coordinator, load, device, room))
-        # elif (isinstance(load, DaliRgbw)):
+        # elif isinstance(load, DaliRgbw):
         #     entities.append(WiserDimRgbEntity(coordinator, load, device, room))
         elif isinstance(load, Dim):  # Includes Dali
             entities.append(WiserDimEntity(coordinator, load, device, room))
@@ -64,6 +65,7 @@ class WiserOnOffEntity(WiserEntity, LightEntity):
     def __init__(
         self, coordinator: WiserCoordinator, load: Load, device: Device, room: dict
     ) -> None:
+        """Set up Wiser on/off light entity."""
         super().__init__(coordinator, load, device, room)
         self._attr_name = None
         self._brightness = None
@@ -72,13 +74,16 @@ class WiserOnOffEntity(WiserEntity, LightEntity):
 
     @property
     def is_on(self) -> bool | None:
+        """Return device state."""
         return self._load.state
 
     async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn on device load."""
         await self._load.async_control_on()
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn off device load."""
         await self._load.async_control_off()
         await self.coordinator.async_request_refresh()
 
@@ -89,19 +94,23 @@ class WiserOnOffSwitchEntity(WiserEntity, SwitchEntity):
     def __init__(
         self, coordinator: WiserCoordinator, load: Load, device: Device, room: dict
     ) -> None:
+        """Set up Wiser on/off switch entity."""
         super().__init__(coordinator, load, device, room)
         self._attr_name = None
         self._brightness = None
 
     @property
     def is_on(self) -> bool | None:
+        """Return device state."""
         return self._load.state
 
     async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn on device load."""
         await self._load.async_control_on()
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn off device load."""
         await self._load.async_control_off()
         await self.coordinator.async_request_refresh()
 
@@ -112,6 +121,7 @@ class WiserDimEntity(WiserEntity, LightEntity):
     def __init__(
         self, coordinator: WiserCoordinator, load: Load, device: Device, room: dict
     ) -> None:
+        """Set up Wiser dimmable light entity."""
         super().__init__(coordinator, load, device, room)
         self._attr_name = None
         self._attr_color_mode = ColorMode.BRIGHTNESS
@@ -119,7 +129,7 @@ class WiserDimEntity(WiserEntity, LightEntity):
 
     @property
     def is_on(self) -> bool | None:
-        """Return True if entity is on."""
+        """Return device state."""
         return self._load.raw_state["bri"] > 0
 
     @property
@@ -128,11 +138,13 @@ class WiserDimEntity(WiserEntity, LightEntity):
         return wiser_to_brightness(self._load.raw_state["bri"])
 
     async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn on device load."""
         bri = brightness_to_wiser(kwargs.get(ATTR_BRIGHTNESS, 255))
         await self._load.async_set_target_state({"bri": bri})
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn off device load."""
         await self._load.async_set_target_state({"bri": 0})
         await self.coordinator.async_request_refresh()
 
