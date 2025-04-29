@@ -1,11 +1,12 @@
 # Wiser by Feller Integration
 
-Use your Wiser by Feller smart light switches, cover controls and scene buttons in Home Assistant.
+Use your Wiser by Feller smart light switches, cover controls and scene buttons in Home Assistant. Note that this is an unofficial integration that is not affiliated with Feller AG. All brand and product names are courtesy of Feller AG.
 
-**Beware:** This integration implements [Wiser by Feller](https://wiser.feller.ch) and not [Wiser by Schneider Electric](https://www.se.com/de/de/product-range/65635-wiser/), which is a competing Smart Home platform (and is not compatible). It es even more confusing, as Feller (the company) is a local subsidiary of Schneider Electric, catering only to the Swiss market.
+> [!IMPORTANT]
+> This integration implements [Wiser by Feller](https://wiser.feller.ch) and not [Wiser by Schneider Electric](https://www.se.com/de/de/product-range/65635-wiser/), which is a competing Smart Home platform (and is not compatible). It es even more confusing, as Feller (the company) is a local subsidiary of Schneider Electric, catering only to the Swiss market.
 
 > [!WARNING]
-> Be advised: This integration is somewhere between Alpha and Beta. It has been running relatively stable for probably a year, but still, there might be bugs. Proceed with caution.
+> Be advised: This integration's stability is somewhere between Alpha and Beta and the integration is still under active development. It has been running relatively stable since April 2024, but still, there might be bugs. Proceed with caution.
 
 ## Installation
 ### Using [HACS](https://www.hacs.xyz/)
@@ -24,33 +25,72 @@ Copy the directory `custom_components/wiser_by_feller` into your `custom_compone
 If it does not exist yet, you can create it in the home assistant installation directory.
 
 ## Setup
-**Note:** Please make sure your Wiser setup has been fully configured by your electrition before adding it to Home Assistant. Otherwise naming and categorizing all the devices can be very time consuming and confusing.
+> [!WARNING]
+> Please make sure your Wiser setup has been fully configured by your electrition before adding it to Home Assistant. Otherwise naming and categorizing all the devices can be very time consuming and confusing.
 
 1. Go to Settings → Devices & services and click "Add Integration".
 2. Search for Wiser by Feller
 3. Enter the IP address of your µGateway
-4. The buttons on your µGateway should start flashing purple and pink. Press one of them within 30 seconds
+4. Fill in the username you would like home assistant to claim with the Gateway. If you have multiple Home Assistant instances, you need to pick individual usernames, as connecting the second one would otherwise un-authenticate the first one.
+5. The buttons on your µGateway should start flashing purple and pink. Press one of them within 30 seconds
+
+> [!TIP]
+> In the moment you connect your gateway all your settings (room and device names, scenes, etc.) are copied over from the user you pick (for a normal install that's either the installer (`installer`, via Wiser eSetup app) or the end user (`admin`, via Wiser Home app).
+> 
+> If you add more scenes with the Wiser eSetup or Wiser Home app, you need to reconnect the user (Note: This is currently under development).
 
 ### Configuration
 #### Allow missing µGateway data
-By default, the setup fails, if fields like fw_version or serial_nr are missing for devices in the API response. Enable this option for debug purposes to disable the check. See [this Wiser API GitHub issue for more details](https://github.com/Feller-AG/wiser-api/issues/43).
+By default, the setup fails, if fields like `fw_version` or `serial_nr` are missing for devices in the API response. Enable this option for debug purposes to disable the check. See [this Wiser API GitHub issue for more details](https://github.com/Feller-AG/wiser-api/issues/43).
 
-**Warning:** Use with caution, this can affect entity IDs and functionality! You should always check the actual API output manually before checking this checkbox.
+> [!CAUTION]
+> Use with caution, this can affect entity IDs and functionality! You should always check the actual API output manually before checking this checkbox.
 
-## Core principles of the integration
-* TODO
-
-## Functionality
-### Devices
+## Basic functionality
 Wiser by Feller devices always consist of two parts: The control front and the base module. There are switching base modules (for light switches and cover controllers) and non-switching base modules (for scene buttons and secondary controls).
 
-### Status LEDs
+Learn more about Wiser devices on the [official website](https://wiser.feller.ch) and [API documentation](https://github.com/Feller-AG/wiser-tutorial).
+
+## Feature overview
+Here's what the integration currently supports:
+
+### ✨ Seamless setup 
+Set up your µGateway by entering it's hostname or IP address. You can also give your installation a unique username and select from which user you want to copy scenes and settings from. Room assignments are automatically suggested on setup, as long as their names match between Home Assistant and Wiser.
+
+### 💡 Devices and Entities 
+Your wiser setup will integrate into Home Assistant as devices and entities. What Wiser calls a load (e.g. a light or an awning) will be represented as a device. This means that light switches with two loads will be represented as two separate devices.
+
+Wiser devices without any loads (e.g. "Nebenstellen" or secondary switches) are represented in Home Assistant as a single device. They only have the identify entity but are also selectable in the status LED service (see [below](#-status-led-service)).
+
+### 🕹️ Identify buttons for devices
+You can ping (identify) any device, which makes their button illumination flash for a short amount of time.
+
+### 🌅 Trigger Wiser scenes
+Wiser scenes are integrated as native Home Assistant scenes, allowing to trigger them like any other scene as well as use them in automations.
+
+### 🔄 Websocket Updates
+The integration listens to state changes via a Websocket, leading to near-instant updates in Home Assistant
+
+### 🚨 Status LED Service
 The integration also provides a status light service that allows you to control the status leds of a Wiser device. Each channel (load) of the device supports a brightness value for the logical "on" and "off" state. Secondary devices follow the main device. As there currently is no way in the Wiser ecosystem to determine wheter a scene is active, scene buttons do not have a logical "on" state. Two-channel devices (e.g. two dimmers in the same switch) allow for different configurations for each channel.
 
-**Limitations**
+This feature can be used to indicate system status (e.g. turn a light switch to red to indicate that your washing machine has finished and wants to be emptied).
+
+#### Limitations
 - In the current implementation of the Wiser ecosystem it is not possible to configure different colors for the "on" and "off" state.
 - Note that updating the configuration can take up to multiple seconds as there are multiple slow API calls involved.
+
+### 🧰 Housekeeping
+The integration automatically prompts you to re-connect if there is any authentication error.
+
+## Roadmap
+Here's a couple of things that are on the roadmap for future releases:
+- Full support for all light types
+- Add support for HVAC features
+- Add support for weather stations
+- Template for [Micro-Python script](https://github.com/Feller-AG/wiser-tutorial/blob/main/doc/api_scripts.md) to trigger Home Assistant events. This way you could use Wiser scene buttons to trigger actions in Home Assistant.
 
 ## Known issues
 - As of right now, the µGateway API only supports Rest and Websockets. MQTT is implemented, [but only for the proprietary app](https://github.com/Feller-AG/wiser-api/issues/23).
 - Currently only light and motor devices are supported. Dali Tunable White and Dali RGB devices are untested.
+- While Home Assistant supports updating the state of multiple devices at once, it does not support controlling multiple devices together. Home Assistant scenes will therefore always update one device after another, while Wiser native scenes will update all devices in parallel. For an optimal experience it is therefore recommended to maintain scenes in Wiser and trigger them with Home Assistant.
