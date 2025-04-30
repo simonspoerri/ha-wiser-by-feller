@@ -149,9 +149,11 @@ class WiserCoordinator(DataUpdateCoordinator):
         data = {
             "color": rgb_tuple_to_hex(tuple(call.data["color"])),
             "foreground_bri": call.data["brightness_on"],
-            "background_bri": call.data["brightness_off"]
-            if "brightness_off" in call.data
-            else call.data["brightness_on"],
+            "background_bri": (
+                call.data["brightness_off"]
+                if "brightness_off" in call.data
+                else call.data["brightness_on"]
+            ),
         }
 
         # TODO: Error Handling
