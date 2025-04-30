@@ -48,7 +48,7 @@ async def async_setup_entry(
 
         if isinstance(load, Motor) and load.sub_type == "relay":
             entities.append(WiserRelayEntity(coordinator, load, device, room))
-        elif isinstance(load, Motor) and load.type == KIND_VENETIAN_BLINDS:
+        elif isinstance(load, Motor) and load.kind == KIND_VENETIAN_BLINDS:
             entities.append(WiserTiltableCoverEntity(coordinator, load, device, room))
         elif isinstance(load, Motor):
             entities.append(WiserCoverEntity(coordinator, load, device, room))
@@ -193,9 +193,22 @@ class WiserTiltableCoverEntity(WiserCoverEntity, CoverEntity):
         self._attr_device_class = CoverDeviceClass.BLIND
 
     @property
+    def is_closed(self) -> bool | None:
+        """Return if the cover is closed."""
+        if (
+            self.current_cover_position is None
+            or self.current_cover_tilt_position is None
+        ):
+            return None
+
+        return (
+            self.current_cover_position == 0 and self.current_cover_tilt_position == 0
+        )
+
+    @property
     def current_cover_tilt_position(self) -> int | None:
         """Return current position of cover tilt. None is unknown, 0 is closed, 100 is fully open."""
-        return wiser_to_cover_tilt(self._load.state.tilt)
+        return wiser_to_cover_tilt(self._load.state["tilt"])
 
     async def async_open_cover_tilt(self, **kwargs):
         """Open the cover tilt."""
