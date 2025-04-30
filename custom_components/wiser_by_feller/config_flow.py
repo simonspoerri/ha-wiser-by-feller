@@ -21,6 +21,8 @@ from homeassistant.const import CONF_HOST, CONF_USERNAME
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
+
 
 from .const import (
     CONF_IMPORTUSER,
@@ -56,6 +58,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     _reauth_entry: list[str, Any]
     _reauth_entry_data: list[str, Any]
+    _discovered_host: str | None = None
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -76,15 +79,27 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 return self.async_create_entry(title=info["title"], data=info)
 
+        # Dynamically set the default value for CONF_HOST
+        step_user_data_schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_HOST, default=self._discovered_host or vol.UNDEFINED
+                ): cv.string,
+                vol.Required(CONF_USERNAME, default=DEFAULT_API_USER): cv.string,
+                vol.Required(CONF_IMPORTUSER, default=DEFAULT_IMPORT_USER): cv.string,
+            }
+        )
+
         return self.async_show_form(
-            step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
+            step_id="user",
+            data_schema=step_user_data_schema,
+            errors=errors,
         )
 
     async def async_step_dhcp(
         self, discovery_info: dhcp.DhcpServiceInfo
     ) -> ConfigFlowResult:
         """Handle a flow initialized by discovery."""
-        # TODO: Not working
         try:
             session = async_get_clientsession(self.hass)
             auth = Auth(session, discovery_info.ip)
@@ -99,7 +114,27 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         self._discovered_host = discovery_info.ip
 
-        return await self.async_step_confirm()
+        return await self.async_step_user()
+
+    async def async_step_zeroconf(
+        self, discovery_info: ZeroconfServiceInfo
+    ) -> ConfigFlowResult:
+        """Handle a flow initialized by discovery (mdns)."""
+        try:
+            session = async_get_clientsession(self.hass)
+            auth = Auth(session, str(discovery_info.ip_address))
+            api = WiserByFellerAPI(auth)
+            info = await api.async_get_info()
+        except Exception:  # pylint: disable=broad-except
+            return self.async_abort(reason="not_wiser_gateway")
+
+        await self.async_set_unique_id(info["sn"])
+        self._abort_if_unique_id_configured({CONF_HOST: discovery_info.ip_address})
+        self._async_abort_entries_match({CONF_HOST: discovery_info.ip_address})
+
+        self._discovered_host = str(discovery_info.ip_address)
+
+        return await self.async_step_user()
 
     async def validate_input(
         self,
