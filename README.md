@@ -1,5 +1,7 @@
 # Wiser by Feller Integration
 
+[![Testing & Linting](https://github.com/Syonix/ha-wiser-by-feller/actions/workflows/test.yml/badge.svg)](https://github.com/Syonix/ha-wiser-by-feller/actions/workflows/test.yml)
+
 Use your Wiser by Feller smart light switches, cover controls and scene buttons in Home Assistant. Note that this is an unofficial integration that is not affiliated with Feller AG. All brand and product names are courtesy of Feller AG.
 
 > [!IMPORTANT]
