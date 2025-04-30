@@ -195,14 +195,14 @@ class WiserTiltableCoverEntity(WiserCoverEntity, CoverEntity):
     @property
     def is_closed(self) -> bool | None:
         """Return if the cover is closed."""
-        return (
-            None
-            if self.current_cover_position is None
+        if (
+            self.current_cover_position is None
             or self.current_cover_tilt_position is None
-            else bool(
-                self.current_cover_position == 0
-                and self.current_cover_tilt_position == 0
-            )
+        ):
+            return None
+
+        return (
+            self.current_cover_position == 0 and self.current_cover_tilt_position == 0
         )
 
     @property
