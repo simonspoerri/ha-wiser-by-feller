@@ -10,7 +10,7 @@ Use your Wiser by Feller smart light switches, cover controls and scene buttons 
 > [!WARNING]
 > Be advised: This integration's stability is somewhere between Alpha and Beta and the integration is still under active development. It has been running relatively stable since April 2024, but still, there might be bugs. Proceed with caution.
 
-## Installation
+## 📦 Installation
 ### Using [HACS](https://www.hacs.xyz/)
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mpbzh&repository=https%3A%2F%2Fgithub.com%2FSyonix%2Fha-wiser-by-feller)
 
@@ -26,7 +26,7 @@ Click the button above or perform the following steps:
 Copy the directory `custom_components/wiser_by_feller` into your `custom_components` directory. 
 If it does not exist yet, you can create it in the home assistant installation directory.
 
-## Setup
+## ⚙️ Setup
 > [!WARNING]
 > Please make sure your Wiser setup has been fully configured by your electrition before adding it to Home Assistant. Otherwise naming and categorizing all the devices can be very time consuming and confusing.
 
@@ -48,12 +48,12 @@ By default, the setup fails, if fields like `fw_version` or `serial_nr` are miss
 > [!CAUTION]
 > Use with caution, this can affect entity IDs and functionality! You should always check the actual API output manually before checking this checkbox.
 
-## Basic functionality
+## 🧰 Basic functionality
 Wiser by Feller devices always consist of two parts: The control front and the base module. There are switching base modules (for light switches and cover controllers) and non-switching base modules (for scene buttons and secondary controls).
 
 Learn more about Wiser devices on the [official website](https://wiser.feller.ch) and [API documentation](https://github.com/Feller-AG/wiser-tutorial).
 
-## Feature overview
+## 🚀 Features
 Here's what the integration currently supports:
 
 ### ✨ Seamless setup 
@@ -85,14 +85,14 @@ This feature can be used to indicate system status (e.g. turn a light switch to 
 ### 🧰 Housekeeping
 The integration automatically prompts you to re-connect if there is any authentication error.
 
-## Roadmap
+## 🛣️ Roadmap
 Here's a couple of things that are on the roadmap for future releases:
 - Full support for all light types
 - Add support for HVAC features
 - Add support for weather stations
 - Template for [Micro-Python script](https://github.com/Feller-AG/wiser-tutorial/blob/main/doc/api_scripts.md) to trigger Home Assistant events. This way you could use Wiser scene buttons to trigger actions in Home Assistant.
 
-## Known issues
+## ⚠️ Known issues
 - As of right now, the µGateway API only supports Rest and Websockets. MQTT is implemented, [but only for the proprietary app](https://github.com/Feller-AG/wiser-api/issues/23).
 - Currently only light and motor devices are supported. Dali Tunable White and Dali RGB devices are untested.
 - While Home Assistant supports updating the state of multiple devices at once, it does not support controlling multiple devices together. Home Assistant scenes will therefore always update one device after another, while Wiser native scenes will update all devices in parallel. For an optimal experience it is therefore recommended to maintain scenes in Wiser and trigger them with Home Assistant.
