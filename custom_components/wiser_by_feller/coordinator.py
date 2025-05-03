@@ -228,6 +228,13 @@ class WiserCoordinator(DataUpdateCoordinator):
         if self._states is None:
             return  # State is not ready yet.
 
+        # TODO: Implement HVAC support issue #7 https://github.com/Syonix/ha-wiser-by-feller/issues/7
+        # TODO: Implement sensor support #8 https://github.com/Syonix/ha-wiser-by-feller/issues/8
+        _LOGGER.debug("Received unexpected data from webservice: %s", data)
+        if "hvacgroup" in data:
+            return  # Ignore hvacgroup updates {'hvacgroup': {'id': 87, 'state': {'on': True, 'flags': {...}, 'boost_temperature': 0, 'heating_cooling_level': 0, 'unit': 'C', 'ambient_temperature': 24.1, 'target_temperature': 19.5}}]
+        if "sensor" in data:
+            return  # Ignore sensor updates {'sensor': {'id': 55, 'value': 23.3}}
         if "load" not in data:
             raise UnexpectedGatewayResult(
                 "Received unexpected data from webservice: List of loads is missing."
@@ -239,7 +246,7 @@ class WiserCoordinator(DataUpdateCoordinator):
 
     async def async_update_loads(self) -> None:
         """Update Wiser device loads from µGateway."""
-        self._loads = await self._api.async_get_loads()
+        self._loads = await self._api.async_get_used_loads()
 
     async def async_update_valid_unique_ids(self) -> None:
         """Update lookup of valid device unique IDs."""
