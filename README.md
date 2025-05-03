@@ -65,7 +65,7 @@ After you've installed the integration, Home Assistant will autodetect your µGa
 You can also give your installation a unique username and select from which user you want to copy scenes and settings from. Room assignments are automatically suggested on setup, as long as their names match between Home Assistant and Wiser.
 
 ### 💡 Devices and Entities 
-Your wiser setup will integrate into Home Assistant as devices and entities. What Wiser calls a load (e.g. a light or an awning) will be represented as a device. This means that light switches with two loads will be represented as two separate devices.
+Your Wiser setup will integrate into Home Assistant as devices and entities. What Wiser calls a load (e.g. a light or an awning) will be represented as a device. This means that light switches with two loads will be represented as two separate devices.
 
 Wiser devices without any loads (e.g. "Nebenstellen" or secondary switches) are represented in Home Assistant as a single device. They only have the identify entity but are also selectable in the status LED service (see [below](#-status-led-service)).
 
@@ -81,7 +81,7 @@ The integration listens to state changes via a Websocket, leading to near-instan
 ### 🚨 Status LED Service
 The integration also provides a status light service that allows you to control the status leds of a Wiser device. Each channel (load) of the device supports a brightness value for the logical "on" and "off" state. Secondary devices follow the main device. As there currently is no way in the Wiser ecosystem to determine wheter a scene is active, scene buttons do not have a logical "on" state. Two-channel devices (e.g. two dimmers in the same switch) allow for different configurations for each channel.
 
-This feature can be used to indicate system status (e.g. turn a light switch to red to indicate that your washing machine has finished and wants to be emptied).
+This feature can be used to indicate system status (e.g. turn a light switch to red to indicate that your washing machine has finished and wants to be emptied or detected motion in a different room).
 
 #### Limitations
 - In the current implementation of the Wiser ecosystem it is not possible to configure different colors for the "on" and "off" state.
