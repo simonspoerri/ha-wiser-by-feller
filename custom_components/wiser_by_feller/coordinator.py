@@ -127,10 +127,10 @@ class WiserCoordinator(DataUpdateCoordinator):
         """The API host (IP address)."""
         return self._api.auth.host
 
-    async def async_set_status_light(self, call: ServiceCall) -> None:
+    async def async_set_status_light(self, call: ServiceCall) -> bool:
         """Set the button illumination for a channel of a specific device."""
 
-        channel = call.data["channel"]
+        channel = int(call.data["channel"])
         device_id = call.data["device"]
         registry = dr.async_get(self.hass)
         device = registry.async_get(device_id)

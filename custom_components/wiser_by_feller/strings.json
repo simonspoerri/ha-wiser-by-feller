@@ -40,9 +40,15 @@
     }
   },
   "options": {
-    "allow_missing_gateway_data": {
-      "title": "Allow missing µGateway data",
-      "description": "By default, the setup fails, if fields like fw_version or serial_nr are missing for devices in the API response. Enable this option for debug purposes to disable the check. WARNING: Use with caution, this can affect entity IDs and functionality!"
+    "step": {
+      "init": {
+        "data": {
+          "allow_missing_gateway_data": "Allow missing µGateway data"
+        },
+        "data_description": {
+          "allow_missing_gateway_data": "By default, the setup fails if fields like `fw_version` or `serial_nr` are missing for devices in the API response. Enable this option for debug purposes to disable the check. WARNING: Use with caution, this can affect entity IDs and functionality!"
+        }
+      }
     }
   },
   "entity": {

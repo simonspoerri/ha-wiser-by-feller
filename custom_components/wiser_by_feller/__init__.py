@@ -29,19 +29,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     auth = Auth(session, entry.data["host"], token=entry.data["token"])
     api = WiserByFellerAPI(auth)
 
-    coordinator = WiserCoordinator(
+    wiser_coordinator = WiserCoordinator(
         hass, api, entry.data["host"], entry.data["token"], entry.options
     )
-    coordinator.ws_init()
+    wiser_coordinator.ws_init()
 
-    hass.data[DOMAIN][entry.entry_id] = coordinator
+    hass.data[DOMAIN][entry.entry_id] = wiser_coordinator
 
-    await coordinator.async_config_entry_first_refresh()
-    await coordinator.async_remove_orphan_devices(entry)
+    await wiser_coordinator.async_config_entry_first_refresh()
+    await wiser_coordinator.async_remove_orphan_devices(entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     hass.services.async_register(
-        DOMAIN, "status_light", coordinator.async_set_status_light
+        DOMAIN, "status_light", wiser_coordinator.async_set_status_light
     )
 
     return True

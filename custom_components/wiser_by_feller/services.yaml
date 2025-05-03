@@ -22,13 +22,13 @@ status_light:
         select:
           options:
             - label: Left (Top) or Center Button
-              value: 0
+              value: "0"
             - label: Right (Top) Button
-              value: 1
+              value: "1"
             - label: Left (Bottom) Button
-              value: 2
+              value: "2"
             - label: Right (Bottom) Button
-              value: 3
+              value: "3"
     brightness_on:
       required: true
       default: 255
