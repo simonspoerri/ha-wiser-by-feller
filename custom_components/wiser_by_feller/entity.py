@@ -58,7 +58,7 @@ class WiserEntity(CoordinatorEntity):
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         model = f"{self._device.c['comm_ref']} + {self._device.a['comm_ref']}"
-        firmware = f"{self._device.c['fw_version']} (Controls) / {self._device.a['fw_version']} (Base)"
+        firmware = f"{self._device.c['fw_version']} (Controls) / {self._device.a['fw_version']} (Actuator)"
         url = f"http://{self.coordinator.api_host}" if self._is_gateway else None
         area = None if self._room is None else self._room["name"]
         via = (
