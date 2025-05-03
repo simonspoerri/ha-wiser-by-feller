@@ -30,11 +30,14 @@ If it does not exist yet, you can create it in the home assistant installation d
 > [!WARNING]
 > Please make sure your Wiser setup has been fully configured by your electrition before adding it to Home Assistant. Otherwise naming and categorizing all the devices can be very time consuming and confusing.
 
-1. Go to Settings → Devices & services and click "Add Integration".
-2. Search for Wiser by Feller
-3. Enter the IP address of your µGateway
-4. Fill in the username you would like home assistant to claim with the Gateway. If you have multiple Home Assistant instances, you need to pick individual usernames, as connecting the second one would otherwise un-authenticate the first one.
-5. The buttons on your µGateway should start flashing purple and pink. Press one of them within 30 seconds
+Home Assistant should ✨automagically✨ discover your µGateway and suggest to set it up. If not, you can follow these steps to connect manually:
+
+1. Go to Settings → Devices & services and click **"Add Integration"**.
+2. Search for **Wiser by Feller**
+3. Enter the **IP address** of your µGateway. <br/> ***Important:** If you have multiple home assistant installations or other applications that connect to your µGateway, make sure to use a unique username (e.g. `homeassistant` and `ha-testbench`) for each installation. Connecting with the same username on a second installation leads to the first one being de-authorized.*
+4. Fill in the **username** you would like home assistant to claim with the Gateway.
+5. The buttons on your µGateway should start **flashing purple and pink**. Press one of them within 30 seconds
+ 
 
 > [!TIP]
 > In the moment you connect your gateway all your settings (room and device names, scenes, etc.) are copied over from the user you pick (for a normal install that's either the installer (`installer`, via Wiser eSetup app) or the end user (`admin`, via Wiser Home app).
@@ -56,8 +59,10 @@ Learn more about Wiser devices on the [official website](https://wiser.feller.ch
 ## 🚀 Features
 Here's what the integration currently supports:
 
-### ✨ Seamless setup 
-Set up your µGateway by entering it's hostname or IP address. You can also give your installation a unique username and select from which user you want to copy scenes and settings from. Room assignments are automatically suggested on setup, as long as their names match between Home Assistant and Wiser.
+### ✨ Seamless setup & autodiscovery
+After you've installed the integration, Home Assistant will autodetect your µGateway and suggest installing it. Based on your network it might be possible that you have to manually enter its hostname or IP address. 
+
+You can also give your installation a unique username and select from which user you want to copy scenes and settings from. Room assignments are automatically suggested on setup, as long as their names match between Home Assistant and Wiser.
 
 ### 💡 Devices and Entities 
 Your wiser setup will integrate into Home Assistant as devices and entities. What Wiser calls a load (e.g. a light or an awning) will be represented as a device. This means that light switches with two loads will be represented as two separate devices.
