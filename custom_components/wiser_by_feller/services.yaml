@@ -17,18 +17,11 @@ status_light:
         color_rgb:
     channel:
       required: true
-      default: 0
+      default: "0"
       selector:
         select:
-          options:
-            - label: Left (Top) or Center Button
-              value: "0"
-            - label: Right (Top) Button
-              value: "1"
-            - label: Left (Bottom) Button
-              value: "2"
-            - label: Right (Bottom) Button
-              value: "3"
+          translation_key: "select_channel"
+          options: ["0", "1", "2", "3"]
     brightness_on:
       required: true
       default: 255
