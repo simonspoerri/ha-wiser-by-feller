@@ -6,7 +6,6 @@ from aiowiserbyfeller import Device, Load
 from aiowiserbyfeller.util import parse_wiser_device_ref_c
 
 from homeassistant.core import callback
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -69,7 +68,7 @@ class WiserEntity(CoordinatorEntity):
 
         return DeviceInfo(
             identifiers={
-                (DOMAIN, self.raw_unique_id),
+                (DOMAIN, self._device.combined_serial_number),
             },
             name=resolve_device_name(self._device, self._room, self._load),
             manufacturer=MANUFACTURER,

@@ -127,10 +127,10 @@ class WiserCoordinator(DataUpdateCoordinator):
         """The API host (IP address)."""
         return self._api.auth.host
 
-    async def async_set_status_light(self, call: ServiceCall) -> None:
+    async def async_set_status_light(self, call: ServiceCall) -> bool:
         """Set the button illumination for a channel of a specific device."""
 
-        channel = call.data["channel"]
+        channel = int(call.data["channel"])
         device_id = call.data["device"]
         registry = dr.async_get(self.hass)
         device = registry.async_get(device_id)
@@ -251,11 +251,9 @@ class WiserCoordinator(DataUpdateCoordinator):
     async def async_update_valid_unique_ids(self) -> None:
         """Update lookup of valid device unique IDs."""
         self._valid_unique_ids = []
-        for load in self._loads:
-            self._valid_unique_ids.append(f"{load.device}_{load.channel}")
-
         for device_id in self._devices:
-            self._valid_unique_ids.append(device_id)
+            device = self._devices[device_id]
+            self._valid_unique_ids.append(device.combined_serial_number)
 
     async def async_update_devices(self) -> None:
         """Update Wiser devices from µGateway."""

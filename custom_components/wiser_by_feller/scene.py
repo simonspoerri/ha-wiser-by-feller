@@ -51,7 +51,21 @@ class WiserSceneEntity(HaScene):
         """Set up the scene entity."""
         self.coordinator = coordinator
         self._attr_has_entity_name = True
-        self._attr_unique_id = f"scene_{scene.id}"
+
+        if self.coordinator.gateway is None:
+            _LOGGER.warning(
+                "The gateway device is not recognized in the coordinator. This can happen if the "
+                '"Allow missing µGateway data" option is set and leads to non-unique scene identifiers. '
+                "Please fix the root cause and disable the option."
+            )
+
+        gateway = (
+            self.coordinator.gateway.combined_serial_number
+            if self.coordinator.gateway is not None
+            else ""
+        )
+
+        self._attr_unique_id = f"{gateway}_scene_{scene.id}"
         self._attr_name = scene.name
         self._scene = scene
 
