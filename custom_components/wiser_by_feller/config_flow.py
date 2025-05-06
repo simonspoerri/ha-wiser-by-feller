@@ -22,6 +22,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
+from homeassistant.data_entry_flow import AbortFlow
 
 
 from .const import (
@@ -73,9 +74,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"  # TODO: errors are not translated
             except InvalidAuth:
                 errors["base"] = "invalid_auth"
-            except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception("Unexpected exception")
-                errors["base"] = "unknown"
+            except AbortFlow as e:
+                raise e
+            except Exception as e:  # pylint: disable=broad-except
+                _LOGGER.exception(f"Unexpected exception: {e}")
+                errors["base"] = str(e)
             else:
                 return self.async_create_entry(title=info["title"], data=info)
 
@@ -140,7 +143,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self,
         hass: HomeAssistant,
         user_input: dict[str, Any],
-        allowExisting: bool = False,
+        allow_existing: bool = False,
     ) -> dict[str, Any]:
         """Validate user input for µGateway setup."""
         session = async_get_clientsession(hass)
@@ -149,7 +152,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         info = await api.async_get_info()
 
         await self.async_set_unique_id(info["sn"])
-        if not allowExisting:
+        if not allow_existing:
             self._abort_if_unique_id_configured({CONF_HOST: user_input[CONF_HOST]})
             self._async_abort_entries_match({CONF_HOST: user_input[CONF_HOST]})
 
@@ -157,9 +160,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             token = await auth.claim(
                 user_input[CONF_USERNAME], user_input[CONF_IMPORTUSER]
             )
-        except AuthorizationFailed as err:
-            raise CannotConnect from err
-        except ClientError as err:
+        except (AuthorizationFailed, ClientError) as err:
             raise CannotConnect from err
 
         net_state = await api.async_get_net_state()
