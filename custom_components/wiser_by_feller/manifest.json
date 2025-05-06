@@ -19,7 +19,7 @@
   "loggers": ["aiowiserbyfeller"],
   "requirements": [
     "websockets",
-    "aiowiserbyfeller==1.0.0b10"
+    "aiowiserbyfeller==1.0.0b12"
   ],
   "version": "1.0.0",
   "zeroconf": [
