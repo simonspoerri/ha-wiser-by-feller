@@ -19,6 +19,7 @@ jobs:
         uses: "hacs/action@main"
         with:
           category: integration
+        continue-on-error: true # TODO: Remove once https://github.com/home-assistant/brands/pull/6971 is merged!
   validate-hass:
     runs-on: "ubuntu-latest"
     steps:
