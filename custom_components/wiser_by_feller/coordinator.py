@@ -219,30 +219,44 @@ class WiserCoordinator(DataUpdateCoordinator):
 
     def ws_init(self) -> None:
         """Set up websocket with µGateway to receive load updates."""
-        self._ws.subscribe(self.ws_update_load)
+        self._ws.subscribe(self.ws_update_data)
         self._ws.init()
         # TODO: Check connection / reconnect -> Watchdog
 
-    def ws_update_load(self, data: dict) -> None:
-        """Process websocket load update."""
+    def ws_update_data(self, data: dict) -> None:
+        """Process websocket data update."""
         if self._states is None:
             return  # State is not ready yet.
 
-        # TODO: Implement HVAC support issue #7 https://github.com/Syonix/ha-wiser-by-feller/issues/7
-        # TODO: Implement sensor support #8 https://github.com/Syonix/ha-wiser-by-feller/issues/8
-        _LOGGER.debug("Received unexpected data from webservice: %s", data)
-        if "hvacgroup" in data:
-            return  # Ignore hvacgroup updates {'hvacgroup': {'id': 87, 'state': {'on': True, 'flags': {...}, 'boost_temperature': 0, 'heating_cooling_level': 0, 'unit': 'C', 'ambient_temperature': 24.1, 'target_temperature': 19.5}}]
-        if "sensor" in data:
-            return  # Ignore sensor updates {'sensor': {'id': 55, 'value': 23.3}}
-        if "load" not in data:
-            raise UnexpectedGatewayResult(
-                "Received unexpected data from webservice: List of loads is missing."
-            )
+        if "load" in data:
+            self.ws_update_load(data["load"])
+        elif "hvacgroup" in data:
+            self.ws_update_hvacgroup(data["hvacgroup"])
+        elif "sensor" in data:
+            self.ws_update_sensor(data["sensor"])
+        elif "westgroup" in data:
+            self.ws_update_sensor(data["westgroup"])
+        else:
+            _LOGGER.debug(f"Unsupported websocket data update received: {data}")
 
-        load = data["load"]
-        self._states[load["id"]] = load["state"]
+    def ws_update_load(self, data: dict) -> None:
+        """Process websocket load update."""
+        self._states[data["id"]] = data["state"]
         self.async_set_updated_data(None)
+
+    def ws_update_hvacgroup(self, data: dict) -> None:
+        """Process websocket hvacgroup update."""
+        # TODO: Implement HVAC support issue #7 https://github.com/Syonix/ha-wiser-by-feller/issues/7
+        # Example data: {'hvacgroup': {'id': 87, 'state': {'on': True, 'flags': {...}, 'boost_temperature': 0, 'heating_cooling_level': 0, 'unit': 'C', 'ambient_temperature': 24.1, 'target_temperature': 19.5}}]
+
+    def ws_update_sensor(self, data: dict):
+        """Process websocket sensor update."""
+        # TODO: Implement sensor support #8 https://github.com/Syonix/ha-wiser-by-feller/issues/8
+        # Example data: {'sensor': {'id': 55, 'value': 23.3}}
+
+    def ws_update_westgroup(self, data: dict):
+        """Process websocket weather station update."""
+        # TODO: Implement weather station support #9 https://github.com/Syonix/ha-wiser-by-feller/issues/9
 
     async def async_update_loads(self) -> None:
         """Update Wiser device loads from µGateway."""
