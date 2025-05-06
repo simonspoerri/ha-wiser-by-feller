@@ -123,19 +123,21 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, discovery_info: ZeroconfServiceInfo
     ) -> ConfigFlowResult:
         """Handle a flow initialized by discovery (mdns)."""
+
         try:
+            host = discovery_info.host
             session = async_get_clientsession(self.hass)
-            auth = Auth(session, str(discovery_info.ip_address))
+            auth = Auth(session, host)
             api = WiserByFellerAPI(auth)
             info = await api.async_get_info()
         except Exception:  # pylint: disable=broad-except
             return self.async_abort(reason="not_wiser_gateway")
 
         await self.async_set_unique_id(info["sn"])
-        self._abort_if_unique_id_configured({CONF_HOST: discovery_info.ip_address})
-        self._async_abort_entries_match({CONF_HOST: discovery_info.ip_address})
+        self._abort_if_unique_id_configured({CONF_HOST: host})
+        self._async_abort_entries_match({CONF_HOST: host})
 
-        self._discovered_host = str(discovery_info.ip_address)
+        self._discovered_host = host
 
         return await self.async_step_user()
 
