@@ -21,7 +21,7 @@
     "websockets",
     "aiowiserbyfeller==1.0.0b12"
   ],
-  "version": "1.0.0",
+  "version": "0.1.0b5",
   "zeroconf": [
     {
       "type": "_http._tcp.local.",
