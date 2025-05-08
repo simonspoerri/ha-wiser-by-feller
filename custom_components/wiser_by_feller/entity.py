@@ -68,7 +68,10 @@ class WiserEntity(CoordinatorEntity):
 
         return DeviceInfo(
             identifiers={
-                (DOMAIN, self._device.combined_serial_number),
+                (
+                    DOMAIN,
+                    self.raw_unique_id,
+                ),  # Either "<device-id> or <device-id>_<load-channel>"
             },
             name=resolve_device_name(self._device, self._room, self._load),
             manufacturer=MANUFACTURER,

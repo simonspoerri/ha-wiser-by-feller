@@ -265,9 +265,13 @@ class WiserCoordinator(DataUpdateCoordinator):
     async def async_update_valid_unique_ids(self) -> None:
         """Update lookup of valid device unique IDs."""
         self._valid_unique_ids = []
-        for device_id in self._devices:
-            device = self._devices[device_id]
-            self._valid_unique_ids.append(device.combined_serial_number)
+        if self.loads is not None:
+            for load in self.loads:
+                self._valid_unique_ids.append(f"{load.device}_{load.channel}")
+
+        if self.devices is not None:
+            for device_id in self.devices:
+                self._valid_unique_ids.append(device_id)
 
     async def async_update_devices(self) -> None:
         """Update Wiser devices from µGateway."""
