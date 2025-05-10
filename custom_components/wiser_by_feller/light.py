@@ -44,6 +44,8 @@ async def async_setup_entry(
         device = coordinator.devices[load.device]
         room = coordinator.rooms[load.room] if load.room is not None else None
 
+        if await coordinator.async_is_onoff_impulse_load(load):
+            continue  # See button.py
         if isinstance(load, OnOff) and load.kind == KIND_SWITCH:
             entities.append(WiserOnOffSwitchEntity(coordinator, load, device, room))
         elif isinstance(load, OnOff) and (load.kind == KIND_LIGHT or load.kind is None):
