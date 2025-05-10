@@ -1,0 +1,32 @@
+name: Validate version
+
+on:
+  push:
+    tags: ["*"]
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Get tag name
+        id: get_tag
+        run: |
+          echo "tag_name=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
+
+      - name: Read version from manifest.json
+        id: get_version
+        run: |
+          version=$(jq -r '.version' custom_components/wiser_by_feller/manifest.json)
+          echo "manifest_version=$version" >> $GITHUB_OUTPUT
+
+      - name: Compare tag with manifest version
+        run: |
+          if [ "${{ steps.get_tag.outputs.tag_name }}" != "v${{ steps.get_version.outputs.manifest_version }}" ]; then
+            echo "❌ Tag '${{ steps.get_tag.outputs.tag_name }}' does not match version '${{ steps.get_version.outputs.manifest_version }}' in manifest.json"
+            exit 1
+          else
+            echo "✅ Tag matches manifest version"
+          fi
