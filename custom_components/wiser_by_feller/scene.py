@@ -32,7 +32,7 @@ async def async_setup_entry(
         scene = scene[1]
 
         if scene.job not in coordinator.jobs:
-            continue
+            continue  # Not a Wiser scene
 
         entities.append(WiserSceneEntity(coordinator, scene))
 

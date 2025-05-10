@@ -18,6 +18,7 @@ from aiowiserbyfeller import (
     Websocket,
     WiserByFellerAPI,
 )
+from aiowiserbyfeller.const import LOAD_TYPE_ONOFF, LOAD_SUBTYPE_ONOFF_DTO
 from aiowiserbyfeller.util import parse_wiser_device_ref_c
 import async_timeout
 
@@ -265,9 +266,13 @@ class WiserCoordinator(DataUpdateCoordinator):
     async def async_update_valid_unique_ids(self) -> None:
         """Update lookup of valid device unique IDs."""
         self._valid_unique_ids = []
-        for device_id in self._devices:
-            device = self._devices[device_id]
-            self._valid_unique_ids.append(device.combined_serial_number)
+        if self.loads is not None:
+            for load in self.loads:
+                self._valid_unique_ids.append(f"{load.device}_{load.channel}")
+
+        if self.devices is not None:
+            for device_id in self.devices:
+                self._valid_unique_ids.append(device_id)
 
     async def async_update_devices(self) -> None:
         """Update Wiser devices from µGateway."""
@@ -349,5 +354,19 @@ class WiserCoordinator(DataUpdateCoordinator):
     async def async_update_rssi(self) -> None:
         """Update Wiser rssi from µGateway."""
         self._rssi = await self._api.async_get_net_rssi()
+
+    async def async_is_onoff_impulse_load(self, load: Load) -> bool:
+        """Check if on/off load is of subtype impulse.
+
+        Note: Impulse and Minuterie (delayed off) are both of the subtype "dto". The only difference is,
+              that the Impulse delay ranges from 100ms to 1s and the Minuterie delay from 10s to 30min.
+        """
+        if load.type != LOAD_TYPE_ONOFF or load.sub_type != LOAD_SUBTYPE_ONOFF_DTO:
+            return False
+
+        config = await self._api.async_get_device_config(load.device)
+        delay = config["outputs"][load.channel]["delay_ms"]
+
+        return delay < 10000
 
     # TODO: use async_get_system_health and add uptime, sockets, reboot_cause (?), mem_{size,free} (?), flash_{size,free} (?), wlan_resets

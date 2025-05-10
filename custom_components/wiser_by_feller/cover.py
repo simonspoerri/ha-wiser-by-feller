@@ -6,7 +6,8 @@ import logging
 import sched
 import time
 
-from aiowiserbyfeller import KIND_AWNING, KIND_VENETIAN_BLINDS, Device, Load, Motor
+from aiowiserbyfeller import Device, Load, Motor
+from aiowiserbyfeller.const import KIND_AWNING, KIND_VENETIAN_BLINDS
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
@@ -93,18 +94,17 @@ class WiserRelayEntity(WiserEntity, CoverEntity):
 
     async def async_stop_cover(self, **kwargs):
         """Stop the cover."""
-        await self._load.async_control_stop()
+        await self._load.async_stop()
 
     async def async_open_cover(self, **kwargs):
         """Open the cover."""
-        await self._load.async_control_level(0)
-        await self.coordinator.async_request_refresh()
-        # TODO: update every second
+        await self._load.async_set_level(0)
+        self.start_tracking()
 
     async def async_close_cover(self, **kwargs):
         """Close cover."""
-        await self._load.async_control_level(10000)
-        await self.coordinator.async_request_refresh()
+        await self._load.async_set_level(10000)
+        self.start_tracking()
 
     def start_tracking(self):
         """Keep track of cover movement while moving."""
@@ -143,7 +143,7 @@ class WiserCoverEntity(WiserRelayEntity, CoverEntity):
             | CoverEntityFeature.SET_POSITION
         )
 
-        # There is not suitable default for "motor", so we use shade.
+        # There is no suitable default for "motor", so we use shade.
         self._attr_device_class = (
             CoverDeviceClass.AWNING
             if load.kind == KIND_AWNING
@@ -161,13 +161,13 @@ class WiserCoverEntity(WiserRelayEntity, CoverEntity):
     async def async_set_cover_position(self, **kwargs):
         """Move the cover to a specific position."""
         level = cover_position_to_wiser(kwargs.get(ATTR_POSITION))
-        await self._load.async_control_level(level)
-        await self.coordinator.async_request_refresh()
+        await self._load.async_set_level(level)
+        self.start_tracking()
 
     async def async_stop_cover(self, **kwargs):
         """Stop the cover."""
-        await self._load.async_control_stop()
-        await self.coordinator.async_request_refresh()
+        await self._load.async_set_stop()
+        self.start_tracking()
 
 
 class WiserTiltableCoverEntity(WiserCoverEntity, CoverEntity):
@@ -219,10 +219,8 @@ class WiserTiltableCoverEntity(WiserCoverEntity, CoverEntity):
     async def async_set_cover_tilt_position(self, **kwargs):
         """Move the cover tilt to a specific position."""
         tilt = cover_tilt_to_wiser(kwargs.get(ATTR_TILT_POSITION))
-        await self._load.async_control_tilt(tilt)
-        await self.coordinator.async_request_refresh()
+        await self._load.async_set_tilt(tilt)
 
     async def async_stop_cover_tilt(self, **kwargs):
         """Stop the cover."""
-        await self._load.async_control_stop()
-        await self.coordinator.async_request_refresh()
+        await self._load.async_stop()
