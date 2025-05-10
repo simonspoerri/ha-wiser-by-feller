@@ -6,8 +6,6 @@ import logging
 from typing import Any
 
 from aiowiserbyfeller import (
-    KIND_LIGHT,
-    KIND_SWITCH,
     DaliRgbw,
     DaliTw,
     Device,
@@ -15,8 +13,10 @@ from aiowiserbyfeller import (
     Load,
     OnOff,
 )
+from aiowiserbyfeller.const import KIND_LIGHT, KIND_SWITCH
 
-from homeassistant.components.light import ATTR_BRIGHTNESS, ColorMode, LightEntity
+from homeassistant.components.light import ATTR_BRIGHTNESS, LightEntity
+from homeassistant.components.light.const import ColorMode
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -87,13 +87,17 @@ class WiserOnOffEntity(WiserEntity, LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on device load."""
-        await self._load.async_control_on()
-        await self.coordinator.async_request_refresh()
+        await self._load.async_switch_on()
+
+        # Prevent state showing as on - off - on due to slightly delayed websocket update
+        self._load.raw_state["bri"] = 100
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off device load."""
-        await self._load.async_control_off()
-        await self.coordinator.async_request_refresh()
+        await self._load.async_switch_off()
+
+        # Prevent state showing as off - on - off due to slightly delayed websocket update
+        self._load.raw_state["bri"] = 0
 
 
 class WiserOnOffSwitchEntity(WiserEntity, SwitchEntity):
@@ -114,13 +118,17 @@ class WiserOnOffSwitchEntity(WiserEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on device load."""
-        await self._load.async_control_on()
-        await self.coordinator.async_request_refresh()
+        await self._load.async_switch_on()
+
+        # Prevent state showing as on - off - on due to slightly delayed websocket update
+        self._load.raw_state["bri"] = 100
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off device load."""
-        await self._load.async_control_off()
-        await self.coordinator.async_request_refresh()
+        await self._load.async_switch_off()
+
+        # Prevent state showing as off - on - off due to slightly delayed websocket update
+        self._load.raw_state["bri"] = 0
 
 
 class WiserDimEntity(WiserEntity, LightEntity):
@@ -147,14 +155,19 @@ class WiserDimEntity(WiserEntity, LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on device load."""
-        bri = brightness_to_wiser(kwargs.get(ATTR_BRIGHTNESS, 255))
-        await self._load.async_set_target_state({"bri": bri})
-        await self.coordinator.async_request_refresh()
+        if ATTR_BRIGHTNESS in kwargs:
+            await self._load.async_set_bri(
+                brightness_to_wiser(kwargs.get(ATTR_BRIGHTNESS, 255))
+            )
+        else:
+            await self._load.async_switch_on()
+
+        # Prevent state showing as on - off - on due to slightly delayed websocket update
+        self._load.raw_state["bri"] = 100
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off device load."""
-        await self._load.async_set_target_state({"bri": 0})
-        await self.coordinator.async_request_refresh()
+        await self._load.async_switch_off()
 
-    # TODO: Turning off and getting off state does not work.
-    # TODO: Control all lights together
+        # Prevent state showing as off - on - off due to slightly delayed websocket update
+        self._load.raw_state["bri"] = 0
