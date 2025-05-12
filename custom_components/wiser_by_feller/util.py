@@ -45,12 +45,12 @@ def resolve_device_name(device: Device, room: dict | None, load: Load | None) ->
     return f"{room['name']} {name}"
 
 
-def wiser_to_brightness(value: int) -> float:
+def wiser_to_brightness(value: int) -> int:
     """Convert a Wiser brightness value (0..10000) to a HA brightness value (0..255)."""
-    return float(value / 10000 * 255)
+    return int(value / 10000 * 255)
 
 
-def brightness_to_wiser(brightness: float) -> int:
+def brightness_to_wiser(brightness: int) -> int:
     """Convert a HA brightness value (0..255) to a Wiser brightness value (0..10000)."""
     return int(brightness / 255 * 10000)
 
