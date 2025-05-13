@@ -66,7 +66,7 @@ def cover_position_to_wiser(cover_position: int) -> int:
 
 
 def wiser_to_cover_tilt(value: int) -> int:
-    """Convert a Wiser cover tilt (0..9) to a wiser cover tilt (0..100)."""
+    """Convert a Wiser cover tilt (0..9) to a HA cover tilt (0..100)."""
     return int(value / 9 * 100)
 
 

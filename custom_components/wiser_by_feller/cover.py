@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import logging
-import sched
-import time
+import asyncio
 
 from aiowiserbyfeller import Device, Load, Motor
 from aiowiserbyfeller.const import KIND_AWNING, KIND_VENETIAN_BLINDS
@@ -74,13 +73,17 @@ class WiserRelayEntity(WiserEntity, CoverEntity):
 
         # There is no suitable default for "motor", so we use shade.
         self._attr_device_class = CoverDeviceClass.SHADE
-        self._scheduler = sched.scheduler(time.time, time.sleep)
-        self._scheduler_id = None
+        self._tracking_task = None
 
     @property
     def is_closed(self) -> bool:
         """Return if the cover is closed or not."""
         return self._load.state["level"] == 10000
+
+    @property
+    def is_moving(self) -> bool:
+        """Return if the cover is moving or not."""
+        return "moving" in self._load.state and self._load.state["moving"] != "stop"
 
     @property
     def is_opening(self) -> bool:
@@ -106,25 +109,57 @@ class WiserRelayEntity(WiserEntity, CoverEntity):
         await self._load.async_set_level(10000)
         self.start_tracking()
 
-    def start_tracking(self):
-        """Keep track of cover movement while moving."""
-        if self._scheduler_id is not None:
-            _LOGGER.info(f"Cancelling scheduler {self._scheduler_id}")
-            self._scheduler.cancel(self._scheduler_id)
-            self._scheduler_id = None
+    def start_tracking(self) -> None:
+        """Keep track of cover movement while moving.
 
-        self._scheduler_id = self._scheduler.enter(
-            1, 1, self.async_keep_track, (self._scheduler,)
-        )
+        Note: Currently the API does not return an updated position when polled during motion, so
+              This whole tracking subroutine is for nothing. However, we'll keep it for now, if a
+              future firmware update changes the API behavior.
+        """
+        if self._tracking_task and not self._tracking_task.done():
+            _LOGGER.debug(
+                "Load #%s: Stopping previously active tracking task", self._load.id
+            )
+            self._tracking_task.cancel()
 
-        self._scheduler.run()
+        _LOGGER.debug("Load #%s: Starting tracking task", self._load.id)
+        self._tracking_task = asyncio.create_task(self._track_movement_loop())
 
-    def async_keep_track(self, scheduler):
-        """Update load data and stop tracking if not moving anymore."""
-        _LOGGER.debug("Updating load #%s while moving", self._load.id)
-        self._load.async_refresh_state()
-        if self.is_closing or self.is_opening:
-            self.start_tracking()
+    async def _track_movement_loop(self) -> None:
+        """Keep updating load state while the cover is moving."""
+        self._is_tracking = True
+        try:
+            while True:
+                await asyncio.sleep(1)
+                _LOGGER.debug("Load #%s: Checking current position", self._load.id)
+                await self._load.async_refresh_state()
+                if not self.is_moving:
+                    return
+        except asyncio.CancelledError as e:
+            _LOGGER.debug(
+                "Load #%s: Checking current position: Tracking task cancelled: %s",
+                self._load.id,
+                e,
+            )
+        finally:
+            self._is_tracking = False
+            _LOGGER.debug("Load #%s: Tracking task stopped", self._load.id)
+
+    async def stop_tracking(self) -> None:
+        """Cancel the tracking task if running."""
+        if not self._tracking_task:
+            _LOGGER.debug("Load #%s: No tracking task running to stop", self._load.id)
+            return
+
+        _LOGGER.debug("Load #%s: Stopping tracking task", self._load.id)
+        self._tracking_task.cancel()
+
+        try:
+            await self._tracking_task
+        except asyncio.CancelledError:
+            pass
+
+        self._tracking_task = None
 
 
 class WiserCoverEntity(WiserRelayEntity, CoverEntity):
@@ -166,8 +201,7 @@ class WiserCoverEntity(WiserRelayEntity, CoverEntity):
 
     async def async_stop_cover(self, **kwargs):
         """Stop the cover."""
-        await self._load.async_set_stop()
-        self.start_tracking()
+        await self._load.async_stop()
 
 
 class WiserTiltableCoverEntity(WiserCoverEntity, CoverEntity):
@@ -212,9 +246,11 @@ class WiserTiltableCoverEntity(WiserCoverEntity, CoverEntity):
 
     async def async_open_cover_tilt(self, **kwargs):
         """Open the cover tilt."""
+        await self._load.async_set_tilt(9)
 
     async def async_close_cover_tilt(self, **kwargs):
         """Close the cover tilt."""
+        await self._load.async_set_tilt(0)
 
     async def async_set_cover_tilt_position(self, **kwargs):
         """Move the cover tilt to a specific position."""

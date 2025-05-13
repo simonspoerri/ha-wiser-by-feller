@@ -165,9 +165,9 @@ class WiserCoordinator(DataUpdateCoordinator):
 
         return True
 
-    async def async_ping_device(self, device_id: str) -> None:
+    async def async_ping_device(self, device_id: str) -> bool:
         """Device will light up the yellow LEDs of all buttons for a short time."""
-        return self._api.async_ping_device(device_id)
+        return await self._api.async_ping_device(device_id)
 
     async def async_remove_orphan_devices(self, entry: ConfigEntry) -> None:
         """Ensure every device associated with this config entry is still currently present, otherwise remove the device (and thus entities)."""
