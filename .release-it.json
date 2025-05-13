@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unpkg.com/release-it/schema/release-it.json",
+  "git": {
+    "commitMessage": "Prepare v${version} release"
+  },
+  "npm": false,
+  "github": {
+    "release": true,
+    "releaseName": "${version}",
+    "web": true
+  },
+  "hooks": {
+    "after:bump": "./bin/update-version.sh ${version}"
+  }
+}
