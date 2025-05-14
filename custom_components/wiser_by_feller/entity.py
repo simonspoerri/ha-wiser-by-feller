@@ -56,7 +56,8 @@ class WiserEntity(CoordinatorEntity):
     @property
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
-        model = f"{self._device.c['comm_ref']} + {self._device.a['comm_ref']}"
+        model_id = f"{self._device.c['comm_ref']} + {self._device.a['comm_ref']}"
+        model = f"{self._device.c_name} + {self._device.a_name}"
         firmware = f"{self._device.c['fw_version']} (Controls) / {self._device.a['fw_version']} (Actuator)"
         url = f"http://{self.coordinator.api_host}" if self._is_gateway else None
         area = None if self._room is None else self._room["name"]
@@ -76,6 +77,7 @@ class WiserEntity(CoordinatorEntity):
             name=resolve_device_name(self._device, self._room, self._load),
             manufacturer=MANUFACTURER,
             model=model,
+            model_id=model_id,
             sw_version=firmware,
             serial_number=self._device.combined_serial_number,
             suggested_area=area,
