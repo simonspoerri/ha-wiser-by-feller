@@ -1,0 +1,41 @@
+name: "💡 Feature Request"
+description: Suggest a new feature or enhancement
+type: Feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for your idea! Please describe your use case and what the feature should do.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the problem or limitation?
+      description: Explain what you're trying to do and what isn't currently possible or intuitive.
+      placeholder: I want to trigger automations when I press a µGateway button...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would the ideal solution look like?
+      description: Describe how you'd expect it to work in Home Assistant.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Any alternatives or workarounds you've tried?
+      placeholder: I've tried using MQTT manually but...
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Add screenshots, links, or references if needed.
+    validations:
+      required: false

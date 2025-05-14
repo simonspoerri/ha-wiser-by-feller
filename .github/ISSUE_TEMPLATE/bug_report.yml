@@ -1,0 +1,73 @@
+name: "🐛 Bug Report"
+description: Report a reproducible bug with the integration
+type: Bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please complete the form below so we can understand and reproduce the issue.
+
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: e.g. 2025.5.0
+    validations:
+      required: true
+
+  - type: input
+    id: integration_version
+    attributes:
+      label: Integration version
+      placeholder: e.g. 0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: gateway_generation
+    attributes:
+      label: µGateway device generation
+      multiple: true
+      options:
+        - Generation A (v1)
+        - Generation B (v2)
+    validations:
+      required: false
+
+  - type: input
+    id: gateway_fw
+    attributes:
+      label: µGateway firmware version
+      placeholder: e.g. 6.0.22-2
+    validations:
+      required: false
+
+  - type: textarea
+    id: describe_bug
+    attributes:
+      label: Describe the bug
+      description: What happened? What did you expect?
+      placeholder: A clear and concise description of what the bug is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Steps to reproduce
+      description: How can we reproduce the bug?
+      placeholder: |
+        1. Go to ...
+        2. Click on ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Paste any error messages from Home Assistant logs here.
+      render: shell
+    validations:
+      required: false
