@@ -27,7 +27,7 @@ body:
     id: gateway_generation
     attributes:
       label: µGateway device generation
-      multiple: true
+      multiple: false
       options:
         - Generation A (v1)
         - Generation B (v2)
