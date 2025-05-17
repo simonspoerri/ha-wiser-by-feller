@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import timedelta
-import logging
 from types import MappingProxyType
 from typing import Any
 
@@ -20,7 +19,6 @@ from aiowiserbyfeller import (
 )
 from aiowiserbyfeller.const import LOAD_TYPE_ONOFF, LOAD_SUBTYPE_ONOFF_DTO
 from aiowiserbyfeller.util import parse_wiser_device_ref_c
-import async_timeout
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import ServiceCall
@@ -35,6 +33,10 @@ from .exceptions import (
     UnexpectedGatewayResult,
 )
 from .util import rgb_tuple_to_hex
+
+import aiowiserbyfeller.errors
+import async_timeout
+import logging
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -306,14 +308,10 @@ class WiserCoordinator(DataUpdateCoordinator):
         if self._options.get(OPTIONS_ALLOW_MISSING_GATEWAY_DATA, False) is True:
             return
 
-        for key in ("a", "c"):
-            for subkey in ("comm_ref", "fw_version", "comm_name", "serial_nr"):
-                if getattr(device, key)[subkey] != "":
-                    continue
-
-                raise UnexpectedGatewayResult(
-                    f"Invalid API response: Device {device.id}.{key} has an empty field {subkey}!"
-                )
+        try:
+            device.validate_data()
+        except aiowiserbyfeller.errors.UnexpectedGatewayResponse as e:
+            raise UnexpectedGatewayResult(f"{e}") from e
 
     async def async_update_rooms(self) -> None:
         """Update Wiser rooms from µGateway."""
