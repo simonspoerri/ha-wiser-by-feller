@@ -1,4 +1,4 @@
-# Wiser by Feller Integration
+# Wiser by Feller for Home Assistant
 
 [![Testing & Linting](https://github.com/Syonix/ha-wiser-by-feller/actions/workflows/test.yml/badge.svg)](https://github.com/Syonix/ha-wiser-by-feller/actions/workflows/test.yml)
 
