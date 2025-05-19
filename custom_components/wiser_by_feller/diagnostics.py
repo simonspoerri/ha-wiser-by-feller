@@ -1,12 +1,15 @@
 """Diagnostics support for Wiser by Feller integration."""
 
 from __future__ import annotations
-from typing import Any
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.device_registry import DeviceEntry
-from homeassistant.components.diagnostics import async_redact_data
+
 import json
+from typing import Any
+
+from homeassistant.components.diagnostics import async_redact_data
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceEntry
+
 from . import DOMAIN
 
 TO_REDACT = ["token", "serial_nr", "serial_number"]
@@ -17,13 +20,11 @@ async def async_get_config_entry_diagnostics(
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
     _coordinator = hass.data[DOMAIN][entry.entry_id]
-    _loads_json = []
-    for load in _coordinator.loads:
-        _loads_json.append(load.raw_data)
+    _loads_json = [load.raw_data for load in _coordinator.loads]
 
-    _devices_json = []
-    for device_id in _coordinator.devices:
-        _devices_json.append(_coordinator.devices[device_id].raw_data)
+    _devices_json = [
+        _coordinator.devices[device_id].raw_data for device_id in _coordinator.devices
+    ]
 
     return {
         "entry_data": async_redact_data(entry.data, TO_REDACT),

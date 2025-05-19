@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from aiowiserbyfeller import Device, Load
 from aiowiserbyfeller.util import parse_wiser_device_ref_c
-
 from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity

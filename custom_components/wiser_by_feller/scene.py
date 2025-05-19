@@ -6,7 +6,6 @@ import logging
 from typing import Any
 
 from aiowiserbyfeller import Scene
-
 from homeassistant.components.scene import Scene as HaScene
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant

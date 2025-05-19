@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 from datetime import timedelta
+import logging
 from types import MappingProxyType
 from typing import Any
 
@@ -17,9 +19,9 @@ from aiowiserbyfeller import (
     Websocket,
     WiserByFellerAPI,
 )
-from aiowiserbyfeller.const import LOAD_TYPE_ONOFF, LOAD_SUBTYPE_ONOFF_DTO
+from aiowiserbyfeller.const import LOAD_SUBTYPE_ONOFF_DTO, LOAD_TYPE_ONOFF
+import aiowiserbyfeller.errors
 from aiowiserbyfeller.util import parse_wiser_device_ref_c
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import ServiceCall
 from homeassistant.exceptions import ConfigEntryAuthFailed
@@ -33,10 +35,6 @@ from .exceptions import (
     UnexpectedGatewayResult,
 )
 from .util import rgb_tuple_to_hex
-
-import aiowiserbyfeller.errors
-import async_timeout
-import logging
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -192,7 +190,7 @@ class WiserCoordinator(DataUpdateCoordinator):
         try:
             # Note: asyncio.TimeoutError and aiohttp.ClientError are already
             # handled by the data update coordinator.
-            async with async_timeout.timeout(10):
+            async with asyncio.timeout(10):
                 if self._loads is None:
                     await self.async_update_loads()
 
@@ -240,7 +238,9 @@ class WiserCoordinator(DataUpdateCoordinator):
         elif "westgroup" in data:
             self.ws_update_sensor(data["westgroup"])
         else:
-            _LOGGER.debug(f"Unsupported websocket data update received: {data}")
+            _LOGGER.debug(
+                "Unsupported websocket data update received", extra={"data": data}
+            )
 
     def ws_update_load(self, data: dict) -> None:
         """Process websocket load update."""

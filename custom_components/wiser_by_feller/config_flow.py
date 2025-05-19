@@ -12,18 +12,16 @@ from aiowiserbyfeller import (
     UnauthorizedUser,
     WiserByFellerAPI,
 )
-import voluptuous as vol
-
 from homeassistant import config_entries
 from homeassistant.components import dhcp
 from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_USERNAME
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.data_entry_flow import AbortFlow
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
-from homeassistant.data_entry_flow import AbortFlow
-
+import voluptuous as vol
 
 from .const import (
     CONF_IMPORTUSER,
@@ -74,11 +72,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"  # TODO: errors are not translated
             except InvalidAuth:
                 errors["base"] = "invalid_auth"
-            except AbortFlow as e:
-                raise e
-            except Exception as e:  # pylint: disable=broad-except
-                _LOGGER.exception(f"Unexpected exception: {e}")
+            except AbortFlow:
+                raise
+            except Exception as e:
                 errors["base"] = str(e)
+                _LOGGER.exception(
+                    "Unexpected exception: %s", errors["base"], extra={"exception": e}
+                )
             else:
                 return self.async_create_entry(title=info["title"], data=info)
 
@@ -108,7 +108,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             auth = Auth(session, discovery_info.ip)
             api = WiserByFellerAPI(auth)
             info = await api.async_get_info()
-        except Exception:  # pylint: disable=broad-except
+        except Exception:  # noqa: BLE001
             return self.async_abort(reason="not_wiser_gateway")
 
         await self.async_set_unique_id(info["sn"])
@@ -130,7 +130,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             auth = Auth(session, host)
             api = WiserByFellerAPI(auth)
             info = await api.async_get_info()
-        except Exception:  # pylint: disable=broad-except
+        except Exception:  # noqa: BLE001
             return self.async_abort(reason="not_wiser_gateway")
 
         await self.async_set_unique_id(info["sn"])
@@ -196,7 +196,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"
             except (InvalidAuth, UnauthorizedUser):
                 errors["base"] = "invalid_auth"
-            except Exception:  # pylint: disable=broad-except
+            except Exception:
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
             else:

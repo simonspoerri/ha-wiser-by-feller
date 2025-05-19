@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import logging
 import asyncio
+import contextlib
+import logging
 
 from aiowiserbyfeller import Device, Load, Motor
 from aiowiserbyfeller.const import KIND_AWNING, KIND_VENETIAN_BLINDS
-
 from homeassistant.components.cover import (
     ATTR_POSITION,
     ATTR_TILT_POSITION,
@@ -153,10 +153,8 @@ class WiserRelayEntity(WiserEntity, CoverEntity):
         _LOGGER.debug("Load #%s: Stopping tracking task", self._load.id)
         self._tracking_task.cancel()
 
-        try:
+        with contextlib.suppress(asyncio.CancelledError):
             await self._tracking_task
-        except asyncio.CancelledError:
-            pass
 
         self._tracking_task = None
 
