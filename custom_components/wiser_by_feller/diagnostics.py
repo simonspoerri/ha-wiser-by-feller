@@ -20,13 +20,11 @@ async def async_get_config_entry_diagnostics(
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
     _coordinator = hass.data[DOMAIN][entry.entry_id]
-    _loads_json = []
-    for load in _coordinator.loads:
-        _loads_json.append(load.raw_data)
+    _loads_json = [load.raw_data for load in _coordinator.loads]
 
-    _devices_json = []
-    for device_id in _coordinator.devices:
-        _devices_json.append(_coordinator.devices[device_id].raw_data)
+    _devices_json = [
+        _coordinator.devices[device_id].raw_data for device_id in _coordinator.devices
+    ]
 
     return {
         "entry_data": async_redact_data(entry.data, TO_REDACT),

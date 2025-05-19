@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 
 from aiowiserbyfeller import Device, Load, Motor
@@ -152,10 +153,8 @@ class WiserRelayEntity(WiserEntity, CoverEntity):
         _LOGGER.debug("Load #%s: Stopping tracking task", self._load.id)
         self._tracking_task.cancel()
 
-        try:
+        with contextlib.suppress(asyncio.CancelledError):
             await self._tracking_task
-        except asyncio.CancelledError:
-            pass
 
         self._tracking_task = None
 
