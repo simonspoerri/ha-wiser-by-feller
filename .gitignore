@@ -1,0 +1,6 @@
+.coverage
+.venv
+__pycache__
+build
+coverage.xml
+junit.xml
