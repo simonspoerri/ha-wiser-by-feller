@@ -5,16 +5,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from aiowiserbyfeller import (
-    DaliRgbw,
-    DaliTw,
-    Device,
-    Dim,
-    Load,
-    OnOff,
-)
+from aiowiserbyfeller import DaliRgbw, DaliTw, Device, Dim, Load, OnOff
 from aiowiserbyfeller.const import KIND_LIGHT, KIND_SWITCH
-
 from homeassistant.components.light import ATTR_BRIGHTNESS, LightEntity
 from homeassistant.components.light.const import ColorMode
 from homeassistant.components.switch import SwitchEntity

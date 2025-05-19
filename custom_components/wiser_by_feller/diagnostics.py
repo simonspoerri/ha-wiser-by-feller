@@ -1,12 +1,15 @@
 """Diagnostics support for Wiser by Feller integration."""
 
 from __future__ import annotations
-from typing import Any
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.device_registry import DeviceEntry
-from homeassistant.components.diagnostics import async_redact_data
+
 import json
+from typing import Any
+
+from homeassistant.components.diagnostics import async_redact_data
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceEntry
+
 from . import DOMAIN
 
 TO_REDACT = ["token", "serial_nr", "serial_number"]

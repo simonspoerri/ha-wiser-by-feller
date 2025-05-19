@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+import logging
 from types import MappingProxyType
 from typing import Any
 
@@ -17,9 +18,10 @@ from aiowiserbyfeller import (
     Websocket,
     WiserByFellerAPI,
 )
-from aiowiserbyfeller.const import LOAD_TYPE_ONOFF, LOAD_SUBTYPE_ONOFF_DTO
+from aiowiserbyfeller.const import LOAD_SUBTYPE_ONOFF_DTO, LOAD_TYPE_ONOFF
+import aiowiserbyfeller.errors
 from aiowiserbyfeller.util import parse_wiser_device_ref_c
-
+import async_timeout
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import ServiceCall
 from homeassistant.exceptions import ConfigEntryAuthFailed
@@ -33,10 +35,6 @@ from .exceptions import (
     UnexpectedGatewayResult,
 )
 from .util import rgb_tuple_to_hex
-
-import aiowiserbyfeller.errors
-import async_timeout
-import logging
 
 _LOGGER = logging.getLogger(__name__)
 

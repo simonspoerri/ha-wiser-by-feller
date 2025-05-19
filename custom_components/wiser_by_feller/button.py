@@ -7,7 +7,6 @@ from typing import Any
 
 from aiowiserbyfeller import Device, Load
 from aiowiserbyfeller.const import BUTTON_ON, EVENT_CLICK
-
 from homeassistant.components.button import ButtonDeviceClass, ButtonEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory

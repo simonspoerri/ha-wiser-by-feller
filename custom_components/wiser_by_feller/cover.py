@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import logging
 import asyncio
+import logging
 
 from aiowiserbyfeller import Device, Load, Motor
 from aiowiserbyfeller.const import KIND_AWNING, KIND_VENETIAN_BLINDS
-
 from homeassistant.components.cover import (
     ATTR_POSITION,
     ATTR_TILT_POSITION,
