@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from aiowiserbyfeller import Device, Load
+from aiowiserbyfeller import Device, Load, Sensor, Temperature
 from aiowiserbyfeller.util import parse_wiser_device_ref_c
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -12,7 +12,11 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import SIGNAL_STRENGTH_DECIBELS_MILLIWATT, EntityCategory
+from homeassistant.const import (
+    SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+    EntityCategory,
+    UnitOfTemperature,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -40,6 +44,16 @@ async def async_setup_entry(
         info = parse_wiser_device_ref_c(device.c["comm_ref"])
         if info["wlan"]:
             entities.append(WiserRssiEntity(coordinator, load, device, room))
+
+    for sensor in coordinator.sensors.items():
+        sensor = sensor[1]
+        device = coordinator.devices[sensor.device]
+        sensor.raw_data = coordinator.states[sensor.id]
+        room = None
+        if isinstance(sensor, Temperature):
+            entities.append(
+                WiserTemperatureSensorEntity(coordinator, None, device, room, sensor)
+            )
 
     if entities:
         async_add_entities(entities)
@@ -77,3 +91,46 @@ class WiserRssiEntity(WiserEntity, SensorEntity):
     def native_value(self) -> int | None:
         """Return the RSSI value."""
         return self._rssi
+
+
+class WiserSensorEntity(WiserEntity, SensorEntity):
+    """A Wiser sensor entity."""
+
+    def __init__(
+        self,
+        coordinator: WiserCoordinator,
+        load: Load | None,
+        device: Device,
+        room: dict | None,
+        sensor: Sensor,
+    ) -> None:
+        """Set up the sensor entity."""
+        super().__init__(coordinator, load, device, room)
+        self._sensor = sensor
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self._sensor.raw_data = self.coordinator.states[self._sensor.id]
+        self.async_write_ha_state()
+
+
+class WiserTemperatureSensorEntity(WiserSensorEntity):
+    """A Wiser room temperature sensor entity."""
+
+    def __init__(self, coordinator, load, device, room, sensor):
+        """Set up the temperature sensor entity."""
+        super().__init__(coordinator, load, device, room, sensor)
+        self._attr_unique_id = f"{self._attr_raw_unique_id}_temperature"
+        self._attr_device_class = SensorDeviceClass.TEMPERATURE
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the current temperature."""
+        return self._sensor.value_temperature
+
+    @property
+    def native_unit_of_measurement(self) -> str | None:
+        """Return the unit of temperature."""
+        return UnitOfTemperature.CELSIUS

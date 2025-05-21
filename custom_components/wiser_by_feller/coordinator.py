@@ -14,6 +14,7 @@ from aiowiserbyfeller import (
     Job,
     Load,
     Scene,
+    Sensor,
     UnauthorizedUser,
     UnsuccessfulRequest,
     Websocket,
@@ -74,6 +75,7 @@ class WiserCoordinator(DataUpdateCoordinator):
         self._device_ids_by_serial = None
         self._valid_unique_ids = []
         self._scenes = None
+        self._sensors = None
         self._jobs = None
         self._rooms = None
         self._rssi = None
@@ -99,6 +101,11 @@ class WiserCoordinator(DataUpdateCoordinator):
     def scenes(self) -> list[Scene] | None:
         """A list of scenes configured in the Wiser by Feller ecosystem (Wiser eSetup app or Wiser Home app)."""
         return self._scenes
+
+    @property
+    def sensors(self) -> list[Sensor] | None:
+        """A list of sensors configured in the Wiser by Feller ecosystem (Wiser eSetup app or Wiser Home app)."""
+        return self._sensors
 
     @property
     def jobs(self) -> list[Job] | None:
@@ -206,6 +213,9 @@ class WiserCoordinator(DataUpdateCoordinator):
                 if self._scenes is None:
                     await self.async_update_scenes()
 
+                if self._sensors is None:
+                    await self.async_update_sensors()
+
                 await self.async_update_valid_unique_ids()
                 await self.async_update_states()
                 await self.async_update_rssi()
@@ -226,40 +236,24 @@ class WiserCoordinator(DataUpdateCoordinator):
 
     def ws_update_data(self, data: dict) -> None:
         """Process websocket data update."""
+        _LOGGER.debug("Websocket data update received", extra={"data": data})
         if self._states is None:
             return  # State is not ready yet.
-
         if "load" in data:
-            self.ws_update_load(data["load"])
-        elif "hvacgroup" in data:
-            self.ws_update_hvacgroup(data["hvacgroup"])
+            self._states[data["load"]["id"]] = data["load"]["state"]
         elif "sensor" in data:
-            self.ws_update_sensor(data["sensor"])
+            self._states[data["sensor"]["id"]] = data["sensor"]
+        elif "hvacgroup" in data:
+            self._states[data["hvacgroup"]["id"]] = data["hvacgroup"]["state"]
         elif "westgroup" in data:
-            self.ws_update_sensor(data["westgroup"])
+            # TODO: Implement weather station support #9 https://github.com/Syonix/ha-wiser-by-feller/issues/9
+            # Example data:
+            pass
         else:
             _LOGGER.debug(
-                "Unsupported websocket data update received", extra={"data": data}
+                "Unsupported websocket data update received",
+                extra={"data": data},
             )
-
-    def ws_update_load(self, data: dict) -> None:
-        """Process websocket load update."""
-        self._states[data["id"]] = data["state"]
-        self.async_set_updated_data(None)
-
-    def ws_update_hvacgroup(self, data: dict) -> None:
-        """Process websocket hvacgroup update."""
-        # TODO: Implement HVAC support issue #7 https://github.com/Syonix/ha-wiser-by-feller/issues/7
-        # Example data: {'hvacgroup': {'id': 87, 'state': {'on': True, 'flags': {...}, 'boost_temperature': 0, 'heating_cooling_level': 0, 'unit': 'C', 'ambient_temperature': 24.1, 'target_temperature': 19.5}}]
-
-    def ws_update_sensor(self, data: dict):
-        """Process websocket sensor update."""
-        # TODO: Implement sensor support #8 https://github.com/Syonix/ha-wiser-by-feller/issues/8
-        # Example data: {'sensor': {'id': 55, 'value': 23.3}}
-
-    def ws_update_westgroup(self, data: dict):
-        """Process websocket weather station update."""
-        # TODO: Implement weather station support #9 https://github.com/Syonix/ha-wiser-by-feller/issues/9
 
     async def async_update_loads(self) -> None:
         """Update Wiser device loads from µGateway."""
@@ -329,6 +323,9 @@ class WiserCoordinator(DataUpdateCoordinator):
         for load in await self._api.async_get_loads_state():
             result[load["id"]] = load["state"]
 
+        for sensor in await self._api.async_get_sensors():
+            result[sensor.id] = sensor.raw_data
+
         self._states = result
 
     async def async_update_jobs(self) -> None:
@@ -348,6 +345,15 @@ class WiserCoordinator(DataUpdateCoordinator):
             result[scene.id] = scene
 
         self._scenes = result
+
+    async def async_update_sensors(self) -> None:
+        """Update Wiser sensors from µGateway."""
+        result = {}
+
+        for sensor in await self._api.async_get_sensors():
+            result[sensor.id] = sensor
+
+        self._sensors = result
 
     async def async_update_rssi(self) -> None:
         """Update Wiser rssi from µGateway."""
