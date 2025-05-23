@@ -8,7 +8,7 @@ Use your Wiser by Feller smart light switches, cover controls and scene buttons 
 > This integration implements [Wiser by Feller](https://wiser.feller.ch) and not [Wiser by Schneider Electric](https://www.se.com/de/de/product-range/65635-wiser/), which is a competing Smart Home platform (and is not compatible). It es even more confusing, as Feller (the company) is a local subsidiary of Schneider Electric, catering only to the Swiss market.
 
 > [!WARNING]
-> This integration is not yet feature complete is still under active development. See below for supported features and roadmap.
+> This integration is not yet feature complete and still under active development. See below for supported features and roadmap.
 
 ## 📦 Installation
 ### Using [HACS](https://www.hacs.xyz/)
