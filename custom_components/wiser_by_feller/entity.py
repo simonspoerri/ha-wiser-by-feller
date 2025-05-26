@@ -62,9 +62,9 @@ class WiserEntity(CoordinatorEntity):
             else self._device.a["comm_ref"]
         )
         model = (
-            f"{self._device.c_name} + {self._device.a_name}"
-            if self._device.c_name != self._device.a_name
-            else self._device.a_name
+            self._device.a_name
+            if self._device.c_name in self._device.a_name
+            else f"{self._device.c_name} + {self._device.a_name}"
         )
         firmware = (
             f"{self._device.c['fw_version']} (Controls) / {self._device.a['fw_version']} (Actuator)"
