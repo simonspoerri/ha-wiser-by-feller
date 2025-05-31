@@ -1,6 +1,6 @@
 {
   "config": {
-    "flow_title": "Connect Wiser by Feller µGateway",
+    "flow_title": "{name}",
     "step": {
       "user": {
         "title": "Connect Wiser by Feller \u00b5Gateway",

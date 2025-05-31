@@ -58,11 +58,23 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     _reauth_entry: list[str, Any]
     _reauth_entry_data: list[str, Any]
     _discovered_host: str | None = None
+    _discovered_name: str | None = None
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Handle the initial step."""
+        if self._discovered_name and self._discovered_host:
+            name = (
+                f"{self._discovered_name} (µGateway)"
+                if self._discovered_name != "µGateway"
+                else self._discovered_name
+            )
+            self.context["title_placeholders"] = {
+                "name": name,
+                "host": self._discovered_host,
+            }
+
         errors: dict[str, str] = {}
         if user_input is not None:
             try:
@@ -114,8 +126,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(info["sn"])
         self._abort_if_unique_id_configured({CONF_HOST: discovery_info.ip})
         self._async_abort_entries_match({CONF_HOST: discovery_info.ip})
-
         self._discovered_host = discovery_info.ip
+        site = await api.async_get_site_info()
+        self._discovered_name = site.get("name", info.get("hostname", "µGateway"))
 
         return await self.async_step_user()
 
@@ -136,8 +149,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(info["sn"])
         self._abort_if_unique_id_configured({CONF_HOST: host})
         self._async_abort_entries_match({CONF_HOST: host})
-
         self._discovered_host = host
+        site = await api.async_get_site_info()
+        self._discovered_name = site.get("name", info.get("hostname", "µGateway"))
 
         return await self.async_step_user()
 
@@ -152,6 +166,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         auth = Auth(session, user_input[CONF_HOST])
         api = WiserByFellerAPI(auth)
         info = await api.async_get_info()
+        site = await api.async_get_site_info()
 
         await self.async_set_unique_id(info["sn"])
         if not allow_existing:
@@ -165,10 +180,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         except (AuthorizationFailed, ClientError) as err:
             raise CannotConnect from err
 
-        net_state = await api.async_get_net_state()
-
         return {
-            "title": net_state["hostname"],
+            "title": site.get("name", info.get("hostname", "µGateway")),
             "token": token,
             "sn": info["sn"],
             "host": user_input[CONF_HOST],
