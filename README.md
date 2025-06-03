@@ -11,16 +11,14 @@ Use your Wiser by Feller smart light switches, cover controls and scene buttons 
 > This integration is not yet feature complete and still under active development. See below for supported features and roadmap.
 
 ## 📦 Installation
-### Using [HACS](https://www.hacs.xyz/)
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mpbzh&repository=https%3A%2F%2Fgithub.com%2FSyonix%2Fha-wiser-by-feller)
+### Using Home Assistant Community Store (HACS)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Syonix&repository=ha-wiser-by-feller)
 
-Click the button above or perform the following steps:
-1. Navigate to HACS on your Home Assistant
-2. Click on the 3 dots in the top right corner.
-3. Select "Custom repositories"
-4. Enter the URL of this repository (https://github.com/Syonix/ha-wiser-by-feller) 
-5. Select the type "Integration".
-6. Click the "ADD" button.
+**Click the button above** or perform the following steps:
+1. Ensure [HACS is installed](https://www.hacs.xyz/docs/use/).
+2. Navigate to HACS on your Home Assistant
+3. Search for "Wiser by Feller"
+4. Click "Download" in the bottom right corner and follow the instructions.
 
 ### Manual installation
 Copy the directory `custom_components/wiser_by_feller` into your `custom_components` directory. 
