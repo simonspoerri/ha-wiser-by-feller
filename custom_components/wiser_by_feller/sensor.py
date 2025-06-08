@@ -49,7 +49,7 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][entry.entry_id]
 
     entities = []
-    for load in coordinator.loads:
+    for load in coordinator.loads.values():
         load.raw_state = coordinator.states[load.id]
         device = coordinator.devices[load.device]
         room = coordinator.rooms[load.room] if load.room is not None else None
@@ -58,8 +58,7 @@ async def async_setup_entry(
         if info["wlan"]:
             entities.append(WiserRssiEntity(coordinator, load, device, room))
 
-    for sensor in coordinator.sensors.items():
-        sensor = sensor[1]
+    for sensor in coordinator.sensors.values():
         device = coordinator.devices[sensor.device]
         sensor.raw_data = coordinator.states[sensor.id]
 

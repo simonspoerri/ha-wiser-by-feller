@@ -88,27 +88,27 @@ class WiserCoordinator(DataUpdateCoordinator):
         return self._loads
 
     @property
-    def states(self) -> list[dict] | None:
+    def states(self) -> dict[int, dict] | None:
         """The current load states of the physical devices."""
         return self._states
 
     @property
-    def devices(self) -> list[dict] | None:
+    def devices(self) -> dict[str, Device] | None:
         """A list of devices configured in the Wiser by Feller ecosystem (Wiser eSetup app or Wiser Home app)."""
         return self._devices
 
     @property
-    def scenes(self) -> list[Scene] | None:
+    def scenes(self) -> dict[int, Scene] | None:
         """A list of scenes configured in the Wiser by Feller ecosystem (Wiser eSetup app or Wiser Home app)."""
         return self._scenes
 
     @property
-    def sensors(self) -> list[Sensor] | None:
+    def sensors(self) -> dict[int, Sensor] | None:
         """A list of sensors configured in the Wiser by Feller ecosystem (Wiser eSetup app or Wiser Home app)."""
         return self._sensors
 
     @property
-    def jobs(self) -> list[Job] | None:
+    def jobs(self) -> dict[int, Job] | None:
         """A list of jobs configured in the Wiser by Feller ecosystem (Wiser eSetup app or Wiser Home app)."""
         return self._jobs
 
@@ -121,7 +121,7 @@ class WiserCoordinator(DataUpdateCoordinator):
         return self._gateway
 
     @property
-    def rooms(self) -> list[dict] | None:
+    def rooms(self) -> dict[int, dict] | None:
         """A list of rooms configured in the Wiser by Feller ecosystem (Wiser eSetup app or Wiser Home app)."""
         return self._rooms
 
@@ -315,12 +315,9 @@ class WiserCoordinator(DataUpdateCoordinator):
 
     async def async_update_rooms(self) -> None:
         """Update Wiser rooms from µGateway."""
-        result = {}
-
-        for room in await self._api.async_get_rooms():
-            result[room["id"]] = room
-
-        self._rooms = result
+        self._rooms = {
+            room.get("id"): room for room in await self._api.async_get_rooms()
+        }
 
     async def async_update_states(self) -> None:
         """Update Wiser device states from µGateway."""
@@ -336,25 +333,17 @@ class WiserCoordinator(DataUpdateCoordinator):
 
     async def async_update_jobs(self) -> None:
         """Update Wiser jobs from µGateway."""
-        result = {}
-
-        for job in await self._api.async_get_jobs():
-            result[job.id] = job
-
-        self._jobs = result
+        self._jobs = {job.id: job for job in await self._api.async_get_jobs()}
 
     async def async_update_scenes(self) -> None:
         """Update Wiser scenes from µGateway."""
-        result = {}
-
-        for scene in await self._api.async_get_scenes():
-            result[scene.id] = scene
-
-        self._scenes = result
+        self._scenes = {scene.id: scene for scene in await self._api.async_get_scenes()}
 
     async def async_update_sensors(self) -> None:
         """Update Wiser sensors from µGateway."""
-        result = {}
+        self._sensors = {
+            sensor.id: sensor for sensor in await self._api.async_get_sensors()
+        }
 
         for sensor in await self._api.async_get_sensors():
             result[sensor.id] = sensor
