@@ -11,6 +11,7 @@ from typing import Any
 from aiowiserbyfeller import (
     AuthorizationFailed,
     Device,
+    HvacGroup,
     Job,
     Load,
     Scene,
@@ -76,6 +77,8 @@ class WiserCoordinator(DataUpdateCoordinator):
         self._valid_unique_ids = []
         self._scenes = None
         self._sensors = None
+        self._hvac_groups = None
+        self._assigned_thermostats = {}
         self._jobs = None
         self._rooms = None
         self._rssi = None
@@ -83,7 +86,7 @@ class WiserCoordinator(DataUpdateCoordinator):
         self._ws = Websocket(host, token, _LOGGER)
 
     @property
-    def loads(self) -> list[Load] | None:
+    def loads(self) -> dict[int, Load] | None:
         """A list of loads of devices configured in the Wiser by Feller ecosystem (Wiser eSetup app or Wiser Home app)."""
         return self._loads
 
@@ -106,6 +109,16 @@ class WiserCoordinator(DataUpdateCoordinator):
     def sensors(self) -> dict[int, Sensor] | None:
         """A list of sensors configured in the Wiser by Feller ecosystem (Wiser eSetup app or Wiser Home app)."""
         return self._sensors
+
+    @property
+    def hvac_groups(self) -> dict[int, HvacGroup] | None:
+        """A list of HVAC groups configured in the Wiser by Feller ecosystem (Wiser eSetup app or Wiser Home app)."""
+        return self._hvac_groups
+
+    @property
+    def assigned_thermostats(self) -> dict[str, int]:
+        """A lookup of HVAC groups by assigned thermostat device id."""
+        return self._assigned_thermostats
 
     @property
     def jobs(self) -> dict[int, Job] | None:
@@ -216,6 +229,9 @@ class WiserCoordinator(DataUpdateCoordinator):
                 if self._sensors is None:
                     await self.async_update_sensors()
 
+                if self._hvac_groups is None:
+                    await self.async_update_hvac_groups()
+
                 await self.async_update_valid_unique_ids()
                 await self.async_update_states()
                 await self.async_update_rssi()
@@ -263,18 +279,23 @@ class WiserCoordinator(DataUpdateCoordinator):
 
     async def async_update_loads(self) -> None:
         """Update Wiser device loads from µGateway."""
-        self._loads = await self._api.async_get_used_loads()
+        self._loads = {load.id: load for load in await self._api.async_get_used_loads()}
 
     async def async_update_valid_unique_ids(self) -> None:
         """Update lookup of valid device unique IDs."""
         self._valid_unique_ids = []
         if self.loads is not None:
-            for load in self.loads:
+            for load in self.loads.values():
                 self._valid_unique_ids.append(f"{load.device}_{load.channel}")
 
         if self.devices is not None:
             for device_id in self.devices:
                 self._valid_unique_ids.append(device_id)
+
+        if self.hvac_groups is not None:
+            for group in self.hvac_groups.values():
+                thermostat = self.devices[group.thermostat_ref.unprefixed_address]
+                self._valid_unique_ids.append(f"{thermostat.id}_hvac_group")
 
     async def async_update_devices(self) -> None:
         """Update Wiser devices from µGateway."""
@@ -321,15 +342,20 @@ class WiserCoordinator(DataUpdateCoordinator):
 
     async def async_update_states(self) -> None:
         """Update Wiser device states from µGateway."""
-        result = {}
+        loads = {
+            load.get("id"): load.get("state")
+            for load in await self._api.async_get_loads_state()
+        }
+        sensors = {
+            sensor.id: sensor.raw_data for sensor in await self._api.async_get_sensors()
+        }
 
-        for load in await self._api.async_get_loads_state():
-            result[load["id"]] = load["state"]
+        hvac_groups = {
+            group["id"]: group["state"]
+            for group in await self._api.async_get_hvac_group_states()
+        }
 
-        for sensor in await self._api.async_get_sensors():
-            result[sensor.id] = sensor.raw_data
-
-        self._states = result
+        self._states = loads | sensors | hvac_groups
 
     async def async_update_jobs(self) -> None:
         """Update Wiser jobs from µGateway."""
@@ -345,10 +371,20 @@ class WiserCoordinator(DataUpdateCoordinator):
             sensor.id: sensor for sensor in await self._api.async_get_sensors()
         }
 
-        for sensor in await self._api.async_get_sensors():
-            result[sensor.id] = sensor
+    async def async_update_hvac_groups(self) -> None:
+        """Update Wiser HVAC groups from µGateway."""
+        self._hvac_groups = {
+            group.id: group for group in await self._api.async_get_hvac_groups()
+        }
 
-        self._sensors = result
+        self._assigned_thermostats = {}
+        for group in self._hvac_groups.values():
+            if group.thermostat_ref is None:
+                continue
+
+            self._assigned_thermostats[group.thermostat_ref.unprefixed_address] = (
+                group.id
+            )
 
     async def async_update_rssi(self) -> None:
         """Update Wiser rssi from µGateway."""

@@ -41,7 +41,7 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][entry.entry_id]
 
     entities = []
-    for load in coordinator.loads:
+    for load in coordinator.loads.values():
         load.raw_state = coordinator.states[load.id]
         device = coordinator.devices[load.device]
         room = coordinator.rooms[load.room] if load.room is not None else None

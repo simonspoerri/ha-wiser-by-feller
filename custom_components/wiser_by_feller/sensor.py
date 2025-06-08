@@ -62,15 +62,22 @@ async def async_setup_entry(
         device = coordinator.devices[sensor.device]
         sensor.raw_data = coordinator.states[sensor.id]
 
-        # Currently sensors do not return a room id, even though in the Wiser system they are assigned to one.
-        # So this is just preparation for when they might do.
-        room = (
-            coordinator.rooms[sensor.room]
-            if hasattr(sensor, "room") and sensor.room is not None
-            else None
-        )
+        # Currently sensors do not return a room id, even though in the Wiser system they
+        # are assigned to one. In some implementations it returns a room name. This
+        # implementation can handle all cases.
+        if hasattr(sensor, "room") and isinstance(sensor.room, int):
+            room = coordinator.rooms[sensor.room]
+        elif hasattr(sensor, "room") and isinstance(sensor.room, str):
+            room = {"name": sensor.room}
+        else:
+            room = None
 
-        if isinstance(sensor, Temperature):
+        if (
+            isinstance(sensor, Temperature)
+            and sensor.device not in coordinator.assigned_thermostats
+        ):
+            # We don't want to show a thermostat as a standalone sensor if it is
+            # assigned to an HVAC group. See climate.py for that.
             entities.append(
                 WiserTemperatureSensorEntity(coordinator, device, room, sensor)
             )
@@ -133,6 +140,7 @@ class WiserSensorEntity(WiserEntity):
     ) -> None:
         """Set up the sensor entity."""
         super().__init__(coordinator, None, device, room)
+        del self._attr_name
         self._sensor = sensor
 
     @callback
