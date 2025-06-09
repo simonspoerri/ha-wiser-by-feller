@@ -14,7 +14,6 @@ from aiowiserbyfeller import (
 )
 from homeassistant import config_entries
 from homeassistant.components import dhcp
-from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_USERNAME
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import AbortFlow
@@ -58,11 +57,21 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     _reauth_entry: list[str, Any]
     _reauth_entry_data: list[str, Any]
     _discovered_host: str | None = None
+    _discovered_name: str | None = None
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None):
         """Handle the initial step."""
+        if self._discovered_name and self._discovered_host:
+            name = (
+                f"{self._discovered_name} (µGateway)"
+                if self._discovered_name != "µGateway"
+                else self._discovered_name
+            )
+            self.context["title_placeholders"] = {
+                "name": name,
+                "host": self._discovered_host,
+            }
+
         errors: dict[str, str] = {}
         if user_input is not None:
             try:
@@ -99,9 +108,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_dhcp(
-        self, discovery_info: dhcp.DhcpServiceInfo
-    ) -> ConfigFlowResult:
+    async def async_step_dhcp(self, discovery_info: dhcp.DhcpServiceInfo):
         """Handle a flow initialized by discovery."""
         try:
             session = async_get_clientsession(self.hass)
@@ -114,14 +121,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(info["sn"])
         self._abort_if_unique_id_configured({CONF_HOST: discovery_info.ip})
         self._async_abort_entries_match({CONF_HOST: discovery_info.ip})
-
         self._discovered_host = discovery_info.ip
+        site = await api.async_get_site_info()
+        self._discovered_name = site.get("name", info.get("hostname", "µGateway"))
 
         return await self.async_step_user()
 
-    async def async_step_zeroconf(
-        self, discovery_info: ZeroconfServiceInfo
-    ) -> ConfigFlowResult:
+    async def async_step_zeroconf(self, discovery_info: ZeroconfServiceInfo):
         """Handle a flow initialized by discovery (mdns)."""
 
         try:
@@ -136,8 +142,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(info["sn"])
         self._abort_if_unique_id_configured({CONF_HOST: host})
         self._async_abort_entries_match({CONF_HOST: host})
-
         self._discovered_host = host
+        site = await api.async_get_site_info()
+        self._discovered_name = site.get("name", info.get("hostname", "µGateway"))
 
         return await self.async_step_user()
 
@@ -152,6 +159,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         auth = Auth(session, user_input[CONF_HOST])
         api = WiserByFellerAPI(auth)
         info = await api.async_get_info()
+        site = await api.async_get_site_info()
 
         await self.async_set_unique_id(info["sn"])
         if not allow_existing:
@@ -165,17 +173,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         except (AuthorizationFailed, ClientError) as err:
             raise CannotConnect from err
 
-        net_state = await api.async_get_net_state()
-
         return {
-            "title": net_state["hostname"],
+            "title": site.get("name", info.get("hostname", "µGateway")),
             "token": token,
             "sn": info["sn"],
             "host": user_input[CONF_HOST],
             "username": user_input[CONF_USERNAME],
         }
 
-    async def async_step_reauth(self, entry_data: list[str, Any]) -> ConfigFlowResult:
+    async def async_step_reauth(self, entry_data: list[str, Any]):
         """Handle configuration by re-auth."""
         self._reauth_entry_data = entry_data
         self._reauth_entry = self.hass.config_entries.async_get_entry(
@@ -183,10 +189,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
         return await self.async_step_reauth_confirm()
 
-    async def async_step_reauth_confirm(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Handle reauthentication with new credentials."""
+    async def async_step_reauth_confirm(self, user_input: dict[str, Any] | None = None):
+        """Handle re-authentication with new credentials."""
         errors: dict[str, str] = {}
         if user_input is not None:
             try:
@@ -237,9 +241,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class OptionsFlowHandler(config_entries.OptionsFlow):
     """Handles options flow for the component."""
 
-    async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_init(self, user_input: dict[str, Any] | None = None):
         """Manage the options."""
         if user_input is not None:
             return self.async_create_entry(data=user_input)

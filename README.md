@@ -36,10 +36,9 @@ Home Assistant should ✨automagically✨ discover your µGateway and suggest to
    ***Important:** If you have multiple home assistant installations or other applications that connect to your µGateway, make sure to use a unique username (e.g. `homeassistant` and `ha-testbench`) for each installation. Connecting with the same username on a second installation leads to the first one being de-authorized.*
 4. Fill in the **username** you would like home assistant to claim with the Gateway.
 5. The buttons on your µGateway should start **flashing purple and pink**. Press one of them within 30 seconds
- 
 
 > [!TIP]
-> In the moment you connect your gateway all your settings (room and device names, scenes, etc.) are copied over from the user you pick (for a normal install that's either the installer (`installer`, via Wiser eSetup app) or the end user (`admin`, via Wiser Home app).
+> In the moment you connect your gateway, all your settings (room and device names, scenes, etc.) are copied over from the user you pick (for a normal install that's either the installer (`installer`, via Wiser eSetup app) or the end user (`admin`, via Wiser Home app).
 > 
 > If you add more scenes with the Wiser eSetup or Wiser Home app, you need to reconnect the user (Note: This is currently under development).
 
@@ -90,28 +89,26 @@ This feature can be used to indicate system status (e.g. turn a light switch to 
 The integration automatically prompts you to re-connect if there is any authentication error.
 
 ## ☑️ Supported devices
-| Device                            |  Support  | Remarks                        |
-|-----------------------------------|:---------:|--------------------------------|
-| Light switches                    |     ✅     | Full support, well tested      |
-| LED dimmers                       |     ✅     | Full support, well tested      |
-| DALI dimmers                      |     ✅     | Full support, well tested      |
-| Blind / awning controls           |     ✅     | Full support, well tested      |
-| Secondary controls (Nebenstellen) |     ✅     | Support for status LED control |
-| Heating controller 6K             |    🏗️    | Under development...           |
-| Temperature sensors               |    🏗     | Under development...           |
-| Weather station + REG module      |           | On the roadmap...              |
-
-> [!NOTE]
-> If you own a Wiser system with a heating controller or a weather station, please contact me. I am looking for real life API data examples and test users 😉
+| Device                            | Support | Remarks                        |
+|-----------------------------------|:-------:|--------------------------------|
+| Light switches                    |    ✅    | Full support, well tested      |
+| LED dimmers                       |    ✅    | Full support, well tested      |
+| DALI dimmers                      |    ✅    | Full support, well tested      |
+| DALI tunable white dimmers        |    ❌    | On the roadmap                 |
+| DALI RGBW dimmers                 |    ❌    | On the roadmap                 |
+| Blind / awning controls           |    ✅    | Full support, well tested      |
+| Secondary controls (Nebenstellen) |    ✅    | Support for status LED control |
+| Heating controller 6K             |    ✅    | Full support, recently added   |
+| Temperature sensors               |    ✅    | Full support, recently added   |
+| Weather station + REG module      |    ✅    | Full support, recently added   |
 
 ## 🛣️ Roadmap
 Here's a couple of things that are on the roadmap for future releases:
 - Full support for all light types
-- Add support for HVAC features
-- Add support for weather stations
 - Template for [Micro-Python script](https://github.com/Feller-AG/wiser-tutorial/blob/main/doc/api_scripts.md) to trigger Home Assistant events. This way you could use Wiser scene buttons to trigger actions in Home Assistant.
 
 ## ⚠️ Known issues
 - As of right now, the µGateway API only supports Rest and Websockets. MQTT is implemented, [but only for the proprietary app](https://github.com/Feller-AG/wiser-api/issues/23).
-- Currently only light and motor devices are supported. Dali Tunable White and Dali RGB devices are untested.
 - While Home Assistant supports updating the state of multiple devices at once, it does not support controlling multiple devices together. Home Assistant scenes will therefore always update one device after another, while Wiser native scenes will update all devices in parallel. For an optimal experience it is therefore recommended to maintain scenes in Wiser and trigger them with Home Assistant.
+- By default, a heating controller is exposed to HA as a heating device. If your heating source also supports cooling, HA will dynamically update the supported modes from heating and off to cooling and off. This was decided because unlike a split system, a heating system like this will not be able to quickly switch between heating and cooling, thus the mode heating/cooling is not correct. Switching between modes currently requires you to reload the dashboard. 
+- The Wiser API allows for custom blink pattern, duration and color for load (e.g. light outputs) pinging. For load-less devices (sensor-only or secondary controls), the API currently only supports pinging by blinking once in yellow.

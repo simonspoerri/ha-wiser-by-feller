@@ -27,9 +27,7 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][entry.entry_id]
     entities = []
 
-    for scene in coordinator.scenes.items():
-        scene = scene[1]
-
+    for scene in coordinator.scenes.values():
         if scene.job not in coordinator.jobs:
             continue  # Not a Wiser scene
 

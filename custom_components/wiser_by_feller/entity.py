@@ -21,24 +21,29 @@ class WiserEntity(CoordinatorEntity):
         self,
         coordinator: WiserCoordinator,
         load: Load | None,
-        device: Device,
+        device: Device | None,
         room: dict | None,
     ) -> None:
         """Set up base entity."""
         super().__init__(coordinator)  # TODO: Is this required?
-        info = parse_wiser_device_ref_c(device.c["comm_ref"])
 
-        self.coordinator_context = (
-            device.id if load is None else load.id
-        )  # TODO: Suboptimal
+        if device is not None:
+            # Support entities without Wiser device for HVAC groups.
+            info = parse_wiser_device_ref_c(device.c["comm_ref"])
+
+            self.coordinator_context = (
+                device.id if load is None else load.id
+            )  # TODO: Suboptimal
+
+            self._attr_raw_unique_id = get_unique_id(device, load)
+            self._attr_unique_id = self._attr_raw_unique_id
+            self._device_name = resolve_device_name(device, room, load)
+            self._is_gateway = info["wlan"]
+
         self.coordinator = coordinator
         self._attr_has_entity_name = True
         self._attr_name = None
-        self._attr_raw_unique_id = get_unique_id(device, load)
-        self._attr_unique_id = self._attr_raw_unique_id
         self._device = device
-        self._device_name = resolve_device_name(device, room, load)
-        self._is_gateway = info["wlan"]
         self._load = load
         self._room = room
 
@@ -54,17 +59,21 @@ class WiserEntity(CoordinatorEntity):
         return self._attr_raw_unique_id
 
     @property
-    def device_info(self) -> DeviceInfo:
+    def device_info(self) -> DeviceInfo | None:
         """Return the device info."""
+
+        if self._device is None:
+            return None
+
         model_id = (
             f"{self._device.c['comm_ref']} + {self._device.a['comm_ref']}"
             if self._device.c["comm_ref"] != self._device.a["comm_ref"]
             else self._device.a["comm_ref"]
         )
         model = (
-            f"{self._device.c_name} + {self._device.a_name}"
-            if self._device.c_name != self._device.a_name
-            else self._device.a_name
+            self._device.a_name
+            if self._device.c_name in self._device.a_name
+            else f"{self._device.c_name} + {self._device.a_name}"
         )
         firmware = (
             f"{self._device.c['fw_version']} (Controls) / {self._device.a['fw_version']} (Actuator)"
