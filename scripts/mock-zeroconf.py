@@ -4,7 +4,7 @@ Due to networking limitations in docker, zeroconf device discovery is hard to te
 Run this script instead to fake-register a device. It should be autodiscovered by Home Assistant as long as the script is running.
 
 Usage:
-$ python3 test/mock_zeroconf.py 192.168.0.99
+$ python3 scripts/mock-zeroconf.py 192.168.0.99
 """
 
 from zeroconf import Zeroconf, ServiceInfo
@@ -12,7 +12,7 @@ import socket
 import sys
 
 if len(sys.argv) < 2:
-    print("Usage: python3 mock_zeroconf.py <ip-address>")
+    print("Usage: python3 scripts/mock-zeroconf.py <ip-address>")
     sys.exit(1)
 
 print(f"Broadcasting device with IP {sys.argv[1]}")

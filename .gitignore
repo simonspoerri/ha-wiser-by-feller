@@ -1,6 +1,17 @@
+*.egg-info
+*/build/*
+*/dist/*
 .coverage
+.pytest*
+.ruff_cache
 .venv
+.vscode
 __pycache__
+acts
 build
 coverage.xml
 junit.xml
+
+# Home Assistant configuration
+config/*
+!config/configuration.yaml
