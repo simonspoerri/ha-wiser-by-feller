@@ -41,7 +41,6 @@ def resolve_device_name(device: Device, room: dict | None, load: Load | None) ->
             name_c = device.c["comm_name"]
         if "comm_name" in device.a:        
             name_a = device.a["comm_name"]    
-        name_a = device.a["comm_name"]
         name = name_c if name_a in name_c else f"{name_c} ({name_a})"
 
     if room is None or room["name"] in name:
