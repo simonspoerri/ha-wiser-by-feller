@@ -1,14 +1,13 @@
 # Wiser by Feller for Home Assistant
 
 [![Testing & Linting](https://github.com/Syonix/ha-wiser-by-feller/actions/workflows/test.yml/badge.svg)](https://github.com/Syonix/ha-wiser-by-feller/actions/workflows/test.yml)
+![HA Installs](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=Installs%20(opt-in%20analytics)&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.wiser_by_feller.total)
+[![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/Syonix/ha-wiser-by-feller/total?logo=github&label=GitHub%20Downloads)](https://github.com/Syonix/ha-wiser-by-feller/releases)
 
 Use your Wiser by Feller smart light switches, cover controls and scene buttons in Home Assistant. Note that this is an unofficial integration that is not affiliated with Feller AG. All brand and product names are courtesy of Feller AG.
 
 > [!IMPORTANT]
 > This integration implements [Wiser by Feller](https://wiser.feller.ch) and not [Wiser by Schneider Electric](https://www.se.com/de/de/product-range/65635-wiser/), which is a competing Smart Home platform (and is not compatible). It es even more confusing, as Feller (the company) is a local subsidiary of Schneider Electric, catering only to the Swiss market.
-
-> [!WARNING]
-> This integration is not yet feature complete and still under active development. See below for supported features and roadmap.
 
 ## 📦 Installation
 ### Using Home Assistant Community Store (HACS)
@@ -94,8 +93,8 @@ The integration automatically prompts you to re-connect if there is any authenti
 | Light switches                    |    ✅    | Full support, well tested      |
 | LED dimmers                       |    ✅    | Full support, well tested      |
 | DALI dimmers                      |    ✅    | Full support, well tested      |
-| DALI tunable white dimmers        |    ❌    | On the roadmap                 |
-| DALI RGBW dimmers                 |    ❌    | On the roadmap                 |
+| DALI tunable white dimmers        |    ✅    | Full support, recently added   |
+| DALI RGBW dimmers                 |    ✅    | Full support, recently added   |
 | Blind / awning controls           |    ✅    | Full support, well tested      |
 | Secondary controls (Nebenstellen) |    ✅    | Support for status LED control |
 | Heating controller 6K             |    ✅    | Full support, recently added   |
@@ -106,6 +105,17 @@ The integration automatically prompts you to re-connect if there is any authenti
 Here's a couple of things that are on the roadmap for future releases:
 - Full support for all light types
 - Template for [Micro-Python script](https://github.com/Feller-AG/wiser-tutorial/blob/main/doc/api_scripts.md) to trigger Home Assistant events. This way you could use Wiser scene buttons to trigger actions in Home Assistant.
+
+## 🛟 Frequently asked questions
+### Setup error `Invalid API response: Device 00012345 has an empty field c.comm_ref!`
+This is a known bug in the Wiser µGateway firmware. Please refer to issue #48 and 
+https://github.com/Feller-AG/wiser-api/issues/43 to resolve the issue.
+
+### Setup error `The API returned the error 'no site info'.`
+This happens, if your Wiser system has not been finalized by an electrician / installer. 
+This includes naming all the loads, setting up rooms, assigning loads to rooms, etc. 
+To resolve this, please ask your electrician / installer to finalize the setup using the [Wiser eSetup app](https://www.feller.ch/de/feller-apps), 
+or refer to https://github.com/Feller-AG/wiser-api/issues/49 for more information on using the API to finalize the system.
 
 ## ⚠️ Known issues
 - As of right now, the µGateway API only supports Rest and Websockets. MQTT is implemented, [but only for the proprietary app](https://github.com/Feller-AG/wiser-api/issues/23).

@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "title": "Connect Wiser by Feller \u00b5Gateway",
-        "description": "Enter the IP address of your \u00b5Gateway and click submit. The buttons should start to flash pink and purple. Press any of the flashing buttons on the \u00b5Gateway within 30 seconds to connect your Home Assistant instance.",
+        "description": "Enter the IP address of your \u00b5Gateway and click submit. The buttons should start to flash pink and purple. Press any of the flashing buttons on the \u00b5Gateway within 30 seconds to connect your Home Assistant instance. After that, depending on the amount and generation of devices in your Wiser network, the initial setup can take up to two minutes.",
         "data": {
           "host": "Host",
           "username": "Username",
@@ -36,15 +36,19 @@
       "already_configured": "Device is already configured",
       "already_in_progress": "Configuration flow is already in progress",
       "no_gateways": "No Wiser \u00b5Gateways discovered",
-      "not_wiser_gateway": "Not a Wiser \u00b5Gateway"
+      "not_wiser_gateway": "The device you're trying to connect to is not a Wiser \u00b5Gateway. Are you sure you've entered the correct hostname or IP?"
     },
     "error": {
       "cannot_connect": "Failed to connect",
+      "invalid_auth": "Authentication failed",
+      "invalid_import_user": "Could not import information from this user. If you never connected to your system, use user 'installer' instead of 'admin'.",
       "discover_timeout": "Unable to discover Wiser \u00b5Gateways",
       "invalid_host": "Invalid hostname or IP address",
       "linking": "Unexpected error",
       "register_failed": "Failed to register, please try again",
-      "unknown": "Unexpected error"
+      "unknown": "Unexpected error",
+      "connection_timeout": "Connection timeout while trying to connect. Please check if the hostname or IP is accessible.",
+      "no_site_info": "The API returned the error 'no site info'. This means your system has not been finalized yet. Please review the FAQ section of the integration for more information."
     }
   },
   "options": {

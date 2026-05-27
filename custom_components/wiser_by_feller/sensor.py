@@ -46,6 +46,7 @@ class GatewaySensorEntityDescription(SensorEntityDescription):
     """Describes a Wiser µGateway system health sensor entity."""
 
     value_fn: Callable[[dict], datetime | StateType]
+    min_api_version: int = 0
 
 
 GW_SENSORS: tuple[GatewaySensorEntityDescription, ...] = (
@@ -55,7 +56,7 @@ GW_SENSORS: tuple[GatewaySensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfInformation.BYTES,
         suggested_unit_of_measurement=UnitOfInformation.KIBIBYTES,
         suggested_display_precision=0,
-        value_fn=lambda data: data["flash_free"],
+        value_fn=lambda data: data.get("flash_free"),
     ),
     GatewaySensorEntityDescription(
         key="flash_size",
@@ -64,7 +65,7 @@ GW_SENSORS: tuple[GatewaySensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfInformation.BYTES,
         suggested_unit_of_measurement=UnitOfInformation.KIBIBYTES,
         suggested_display_precision=0,
-        value_fn=lambda data: data["flash_size"],
+        value_fn=lambda data: data.get("flash_size"),
     ),
     GatewaySensorEntityDescription(
         key="mem_size",
@@ -73,7 +74,7 @@ GW_SENSORS: tuple[GatewaySensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfInformation.BYTES,
         suggested_unit_of_measurement=UnitOfInformation.KIBIBYTES,
         suggested_display_precision=0,
-        value_fn=lambda data: data["mem_size"],
+        value_fn=lambda data: data.get("mem_size"),
     ),
     GatewaySensorEntityDescription(
         key="mem_free",
@@ -81,44 +82,45 @@ GW_SENSORS: tuple[GatewaySensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfInformation.BYTES,
         suggested_unit_of_measurement=UnitOfInformation.KIBIBYTES,
         suggested_display_precision=0,
-        value_fn=lambda data: data["mem_free"],
+        value_fn=lambda data: data.get("mem_free"),
     ),
     GatewaySensorEntityDescription(
         key="core_temp",
         device_class=SensorDeviceClass.TEMPERATURE,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         suggested_display_precision=1,
-        value_fn=lambda data: data["core_temp"],
+        value_fn=lambda data: data.get("core_temp"),
+        min_api_version=6,
     ),
     GatewaySensorEntityDescription(
         key="wlan_resets",
-        state_class=SensorStateClass.TOTAL_INCREASING,
+        state_class=SensorStateClass.TOTAL,
         icon="mdi:wifi-alert",
-        value_fn=lambda data: data["wlan_resets"],
+        value_fn=lambda data: data.get("wlan_resets"),
     ),
     GatewaySensorEntityDescription(
         key="max_tasks",
-        state_class=SensorStateClass.TOTAL_INCREASING,
+        state_class=SensorStateClass.TOTAL,
         icon="mdi:list-box-outline",
-        value_fn=lambda data: data["max_tasks"],
+        value_fn=lambda data: data.get("max_tasks"),
     ),
     GatewaySensorEntityDescription(
         key="wlan_rssi",
         entity_registry_enabled_default=False,
         device_class=SensorDeviceClass.SIGNAL_STRENGTH,
         native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
-        value_fn=lambda data: data["wlan_rssi"],
+        value_fn=lambda data: data.get("wlan_rssi"),
     ),
     GatewaySensorEntityDescription(
         key="reboot_cause",
         icon="mdi:restart-alert",
-        value_fn=lambda data: data["reboot_cause"],
+        value_fn=lambda data: data.get("reboot_cause"),
     ),
     GatewaySensorEntityDescription(
         key="sockets",
-        state_class=SensorStateClass.TOTAL_INCREASING,
+        state_class=SensorStateClass.TOTAL,
         icon="mdi:arrow-expand-horizontal",
-        value_fn=lambda data: data["sockets"],
+        value_fn=lambda data: data.get("sockets"),
     ),
 )
 
@@ -133,12 +135,14 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][entry.entry_id]
 
     entities = [
-        WiserSystemHealthEntity(coordinator, description) for description in GW_SENSORS
+        WiserSystemHealthEntity(coordinator, description)
+        for description in GW_SENSORS
+        if coordinator.gateway_api_major_version >= description.min_api_version
     ]
 
     entities.append(WiserLastRebootEntity(coordinator))
 
-    for sensor in coordinator.sensors.values():
+    for sensor in coordinator.sensors.values() if coordinator.sensors else []:
         device = coordinator.devices[sensor.device]
         sensor.raw_data = coordinator.states[sensor.id]
 

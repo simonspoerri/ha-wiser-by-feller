@@ -149,6 +149,30 @@ class WiserCoordinator(DataUpdateCoordinator):
         """The API host (IP address)."""
         return self._api.auth.host
 
+    @property
+    def gateway_api_major_version(self) -> int | None:
+        """Gateway major version (e.g. 5 for generation A devices)."""
+        return (
+            int(self.gateway_info["api"][:1]) if self.gateway_info is not None else None
+        )
+
+    @property
+    def is_gen_b(self) -> bool:
+        """State if the µGateway is a generation B device (Starting from API version 6)."""
+        version = self.gateway_api_major_version
+
+        return version is not None and version >= 6
+
+    @property
+    def gateway_supports_sensors(self) -> bool:
+        """State if the µGateway supports sensor devices (Gen B)."""
+        return self.is_gen_b
+
+    @property
+    def gateway_supports_hvac_groups(self) -> bool:
+        """State if the µGateway supports HVAC groups (Gen B)."""
+        return self.is_gen_b
+
     async def async_set_status_light(self, call: ServiceCall) -> bool:
         """Set the button illumination for a channel of a specific device."""
 
@@ -197,38 +221,56 @@ class WiserCoordinator(DataUpdateCoordinator):
         so entities can quickly look up their data.
         """
         try:
+            _LOGGER.debug("Attempting to update data from µGateway...")
             # Note: asyncio.TimeoutError and aiohttp.ClientError are already
             # handled by the data update coordinator.
             async with asyncio.timeout(10):
-                if self._loads is None:
+                await self.async_update_gateway_info()
+
+            if self._loads is None:
+                async with asyncio.timeout(10):
                     await self.async_update_loads()
 
-                if self._rooms is None:
+            if self._rooms is None:
+                async with asyncio.timeout(10):
                     await self.async_update_rooms()
 
-                if self._devices is None:
+            if self._devices is None:
+                # Updating the detailed device information takes ~1 second per device on µGWv1
+                # and the limit for a µGWv1 system is at 50 devices. µGWv2 devices allow for
+                # 100 devices, but update much faster (~500 ms for 30 devices).
+                async with asyncio.timeout(75):
                     await self.async_update_devices()
 
-                if self._jobs is None:
+            if self._jobs is None:
+                async with asyncio.timeout(10):
                     await self.async_update_jobs()
 
-                if self._scenes is None:
+            if self._scenes is None:
+                async with asyncio.timeout(10):
                     await self.async_update_scenes()
 
-                if self._sensors is None:
+            if self._sensors is None and self.gateway_supports_sensors:
+                async with asyncio.timeout(10):
                     await self.async_update_sensors()
 
-                if self._hvac_groups is None:
+            if self._hvac_groups is None and self.gateway_supports_hvac_groups:
+                async with asyncio.timeout(10):
                     await self.async_update_hvac_groups()
 
+            async with asyncio.timeout(10):
                 await self.async_update_states()
+
+            async with asyncio.timeout(10):
                 await self.async_update_system_health()
-                await self.async_update_gateway_info()
-        except AuthorizationFailed as err:
+
+            _LOGGER.debug("Successfully updated data from µGateway.")
+
+        except asyncio.TimeoutError as err:
+            raise UpdateFailed("Timeout while fetching data from µGateway") from err
+        except (AuthorizationFailed, UnauthorizedUser) as err:
             # Raising ConfigEntryAuthFailed will cancel future updates
             # and start a config flow with SOURCE_REAUTH (async_step_reauth)
-            raise ConfigEntryAuthFailed from err
-        except UnauthorizedUser as err:
             raise ConfigEntryAuthFailed from err
         except UnsuccessfulRequest as err:
             raise UpdateFailed(f"Error communicating with API: {err}") from err
@@ -268,6 +310,7 @@ class WiserCoordinator(DataUpdateCoordinator):
 
     async def async_update_loads(self) -> None:
         """Update Wiser device loads from µGateway."""
+        _LOGGER.debug("Attempting to update device loads from µGateway...")
         self._loads = {load.id: load for load in await self._api.async_get_used_loads()}
 
     async def async_update_devices(self) -> None:
@@ -275,6 +318,9 @@ class WiserCoordinator(DataUpdateCoordinator):
         result = {}
         serials = {}
 
+        _LOGGER.debug(
+            "Attempting to update detailed device information from µGateway..."
+        )
         for device in await self._api.async_get_devices_detail():
             self.validate_device_data(device)
             result[device.id] = device
@@ -309,6 +355,7 @@ class WiserCoordinator(DataUpdateCoordinator):
 
     async def async_update_rooms(self) -> None:
         """Update Wiser rooms from µGateway."""
+        _LOGGER.debug("Attempting to update rooms from µGateway...")
         self._rooms = {
             room.get("id"): room for room in await self._api.async_get_rooms()
         }
@@ -319,33 +366,46 @@ class WiserCoordinator(DataUpdateCoordinator):
             load.get("id"): load.get("state")
             for load in await self._api.async_get_loads_state()
         }
-        sensors = {
-            sensor.id: sensor.raw_data for sensor in await self._api.async_get_sensors()
-        }
+        sensors = (
+            {
+                sensor.id: sensor.raw_data
+                for sensor in await self._api.async_get_sensors()
+            }
+            if self.gateway_supports_sensors
+            else {}
+        )
 
-        hvac_groups = {
-            group["id"]: group["state"]
-            for group in await self._api.async_get_hvac_group_states()
-        }
+        hvac_groups = (
+            {
+                group["id"]: group["state"]
+                for group in await self._api.async_get_hvac_group_states()
+            }
+            if self.gateway_supports_hvac_groups
+            else {}
+        )
 
         self._states = loads | sensors | hvac_groups
 
     async def async_update_jobs(self) -> None:
         """Update Wiser jobs from µGateway."""
+        _LOGGER.debug("Attempting to update jobs from µGateway...")
         self._jobs = {job.id: job for job in await self._api.async_get_jobs()}
 
     async def async_update_scenes(self) -> None:
         """Update Wiser scenes from µGateway."""
+        _LOGGER.debug("Attempting to update scenes from µGateway...")
         self._scenes = {scene.id: scene for scene in await self._api.async_get_scenes()}
 
     async def async_update_sensors(self) -> None:
         """Update Wiser sensors from µGateway."""
+        _LOGGER.debug("Attempting to update sensors from µGateway...")
         self._sensors = {
             sensor.id: sensor for sensor in await self._api.async_get_sensors()
         }
 
     async def async_update_hvac_groups(self) -> None:
         """Update Wiser HVAC groups from µGateway."""
+        _LOGGER.debug("Attempting to update HVAC groups from µGateway...")
         self._hvac_groups = {
             group.id: group for group in await self._api.async_get_hvac_groups()
         }
@@ -361,10 +421,12 @@ class WiserCoordinator(DataUpdateCoordinator):
 
     async def async_update_system_health(self) -> None:
         """Update Wiser system health from µGateway."""
+        _LOGGER.debug("Attempting to update system health from µGateway...")
         self._system_health = await self._api.async_get_system_health()
 
     async def async_update_gateway_info(self) -> None:
         """Update Wiser gateway info from µGateway."""
+        _LOGGER.debug("Attempting to update µGateway info...")
         self._gateway_info = await self._api.async_get_info_debug()
 
     async def async_is_onoff_impulse_load(self, load: Load) -> bool:
